@@ -1,7 +1,7 @@
 Package: Interesting
 Title: Interesting
 Version: 0.0.0.9000
-Authors@R:c(
+Authors@R: c(
     person("Karishma", "Srikanth", , "ksrikanth@usaid.gov", role = c("aut", "cre")),
     person("Nelly", "Maina", , "nmaina@usaid.gov", role = c("aut")),
     person("Nashiva", "McDavid", , "nmcdavid@usaid.gov", role = c("aut")))
@@ -10,4 +10,6 @@ License: MIT + file LICENSE
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.1.2
-Suggests: 
+Depends: 
+    R (>= 2.10)
+LazyData: true
