@@ -1,11 +1,10 @@
 Package: Interesting
 Title: Interesting
 Version: 0.0.0.9000
-Authors@R: 
+Authors@R:c(
     person("Karishma", "Srikanth", , "ksrikanth@usaid.gov", role = c("aut", "cre")),
     person("Nelly", "Maina", , "nmaina@usaid.gov", role = c("aut")),
-    person("Nashiva", "McDavid", , "nmcdavid@usaid.gov", role = c("aut"))
-    )
+    person("Nashiva", "McDavid", , "nmcdavid@usaid.gov", role = c("aut")))
 Description: Processing and validation scripts for CIRG Quarterly Data
 License: MIT + file LICENSE
 Encoding: UTF-8
