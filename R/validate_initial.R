@@ -53,6 +53,7 @@ check_meta <- function(filepath){
   if(is_metatab(filepath)){
     type <- cir_extract_meta(filepath, "type")
     temp_version <- cir_extract_meta(filepath, "version")
+    reppd_meta <-  cir_extract_meta(filepath, "period")
   } else {
     df <- cir_import(filepath)
     type <- ifelse(var_exists(df, "val"), "Long [no meta provided]", "Wide [no meta provided]")
@@ -65,13 +66,15 @@ check_meta <- function(filepath){
   ou_name <-  cir_extract_meta(filepath, "ou")
   ou_name <- ifelse(is.na(ou_name), crayon::yellow(ou_name), crayon::blue(ou_name))
   file_name <- crayon::blue(basename(filepath))
+  reppd_meta <- crayon::blue(reppd_meta)
 
   #PRINT VALIDATION
 
   cat("\n--------------------------------------------",
       "\nCountry:", ou_name,
       "\nFile name:", file_name,
-      "\nWhat template was submitted?", temp_version
+      "\nWhat template was submitted?", temp_version,
+      "\nWhat reporting period?", reppd_meta
   )
 }
 
