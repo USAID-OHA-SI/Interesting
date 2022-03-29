@@ -10,8 +10,22 @@ cir_restrict_cols <- function(df){
     cols <- intersect(template_cols_long, names(df))
   } else if(var_exists(df, "dreams_fp.....")){ #change this!
     cols <- intersect(template_cols_semiwide, names(df))
+  } else if(var_exists(df, "dreams_fp.15_19.f...d")){
+    cols <- intersect(temp_wide_dreams, names(df)) #change this!
+  } else if(var_exists(df, "gend_gbv.10_14.f.sexualviolence..n")){
+    cols <- intersect(temp_wide_gender, names(df)) #change this!
   } else if(var_exists(df, "tx_new_verify....fsw.n")){
-    cols <- intersect(template_cols_wide_kp, names(df)) #change this!
+    cols <- intersect(temp_wide_kp, names(df)) #change this!
+  } else if(var_exists(df, "pmtct_eid_eligible.0_12m..eideligible..n")){
+    cols <- intersect(temp_wide_lab, names(df)) #change this!
+  } else if(var_exists(df, "ovc_offer.u1.m...n")){
+    cols <- intersect(temp_wide_ovc, names(df)) #change this!
+  } else if(var_exists(df, "prep_screen.10_14.m...n")){
+    cols <- intersect(temp_wide_prep, names(df))
+  } else if(var_exists(df, "sc_arvdisp...tld30_countbottles..n")){
+    cols <- intersect(temp_wide_sch, names(df))
+  } else if(var_exists(df, "vmmc_ae.20_24.male...n")){
+    cols <- intersect(temp_wide_vmmc, names(df))
   }
   df <- dplyr::select_at(df, cols)
 
