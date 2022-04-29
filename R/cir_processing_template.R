@@ -5,7 +5,7 @@ validate_initial(filepath)
   #in order for this to work, we need the naming conventions to be consistent
 df <- cir_import(filepath)
 
-#validation checks
+#validation checks - VMMC doesnt work on this one because of the names issue - come back to that!
 validate_import(df)
 
 #remove any extra columns
