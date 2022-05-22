@@ -27,7 +27,8 @@ cir_store_meta <- function(filepath){
                     mtype = stringr::str_c(mtype, "_meta")) %>%
       tidyr::pivot_wider(names_from = mtype, values_from = mvalue) %>%
       dplyr::mutate(filepaths = basename(filepath),
-                    google_id = NA)
+                    google_id = NA,
+                    period_meta = str_replace(period_meta, pattern=" ", repl=""))
 
 
   } else {
