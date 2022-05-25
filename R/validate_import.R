@@ -52,10 +52,12 @@ check_distinct_ous <- function(df){
 
   ous <- df %>%
     dplyr::distinct(operatingunit) %>%
-    dplyr::pull(operatingunit) %>%
-    paste(collapse = ", ")
+    dplyr::pull(operatingunit)
 
   multi_ous <- length(ous) > 1
+
+  ous <- ous %>%
+    paste(collapse = ", ")
 
   ou_out <- ifelse(multi_ous == TRUE, crayon::yellow(ous), crayon::blue(ous))
 
