@@ -66,7 +66,7 @@ check_meta <- function(filepath){
   ou_name <-  cir_extract_meta(filepath, "ou")
   ou_name <- ifelse(is.na(ou_name), crayon::yellow(ou_name), crayon::blue(ou_name))
   file_name <- crayon::blue(basename(filepath))
-  reppd_meta <- crayon::blue(reppd_meta)
+  reppd_meta <- ifelse(is.na(reppd_meta), crayon::yellow(reppd_meta), crayon::blue(reppd_meta))
 
   #PRINT VALIDATION
 
