@@ -107,3 +107,63 @@ flag_extra <- function(required, submitted){
   return(extra)
 }
 
+
+
+#' Count missing values
+#'
+#' @export
+#' @param df data frame
+#' @param var variable to count missing values
+
+count_missing <- function(df, var){
+
+  missing <- df %>%
+    dplyr::filter(is.na({{var}})) %>%
+    NROW()
+
+  missing_pct <- round(missing/NROW(df), 2)*100
+  missing_pct <- paste0("(",missing_pct, "%)")
+
+  count <- ifelse(missing > 0, crayon::red(missing, "out of", NROW(df), "rows", missing_pct), crayon::green("No"))
+  return(count)
+}
+
+#' Paint console text in red
+#'
+#' @param txt text to be printed
+#' @export
+#'
+paint_red <- function(txt) {
+  msg <- crayon::red(txt)
+  return(msg)
+}
+
+#' Paint console text in green
+#'
+#' @param txt text to be printed
+#' @export
+#'
+paint_green <- function(txt) {
+  msg <- crayon::green(txt)
+  return(msg)
+}
+
+#' Paint console text in blue
+#'
+#' @param txt text to be printed
+#' @export
+#'
+paint_blue <- function(txt) {
+  msg <- crayon::blue(txt)
+  return(msg)
+}
+
+#' Paint console text in yellow
+#'
+#' @param txt text to be printed
+#' @export
+#'
+paint_yellow <- function(txt) {
+  msg <- rayon::yellow(txt)
+  return(msg)
+}
