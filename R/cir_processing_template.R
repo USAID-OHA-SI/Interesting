@@ -1,5 +1,7 @@
 cir_processing <- function(filepath) {
 
+  #run template column storing from Interesting/data-raw/template_columns.R
+
   #validation checks
   validate_initial(filepath)
 
