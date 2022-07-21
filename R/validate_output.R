@@ -1,6 +1,6 @@
 #' Validation Checks
 #'
-#' @param df HFR data framed created by `hfr_process_template()`
+#' @param df HFR data framed created by `cir_process_template()`
 #' @param content check full dataset
 #' @param datim_path path to look up files
 #'
@@ -26,7 +26,7 @@ validate_output <- function(df, output_path, content=FALSE, datim_path=NULL){
 
 #' Validate columns for export
 #'
-#' @param df HFR data framed created by `hfr_process_template()`
+#' @param df HFR data framed created by `cir_process_template()`
 
 check_output_cols <- function(df){
 
@@ -52,36 +52,10 @@ check_output_cols <- function(df){
 }
 
 
-#' Validate dates
-#'
-#' @param df HFR data framed created by `hfr_process_template()`
-
-check_dates <-function(df){
-
-  #missing dates?
-  missing_dates <- count_missing(df, reportingperiod)
-
-  #date range
-  pds <- length(unique(df$reportingperiod))
-
-  date_range <- df %>%
-    dplyr::distinct(reportingperiod) %>%
-    dplyr::pull(reportingperiod)
-
-  date_range <- ifelse(pds > 1, crayon::red(date_range), crayon::green(date_range))
-  pds <- ifelse(pds > 1, crayon::red("Yes"), crayon::green("No"))
-
-  #print validation
-  cat("\nAre there any missing dates?", missing_dates,
-      "\nDoes the submission cover multiple period?", pds,
-      "\nWhat dates does the submission cover?", date_range)
-}
-
-
 
 #' Validate orgunituids for export
 #'
-#' @param df HFR data framed created by `hfr_process_template()`
+#' @param df HFR data framed created by ``cir_process_template()``
 
 check_orgunituids <-function(df){
 
@@ -95,7 +69,7 @@ check_orgunituids <-function(df){
 
 #' Validate mechanisms for export
 #'
-#' @param df HFR data framed created by `hfr_process_template()`
+#' @param df HFR data framed created by ``cir_process_template()``
 
 check_mechs <-function(df){
 
@@ -113,7 +87,7 @@ check_mechs <-function(df){
 
 #' Validate indicators for export
 #'
-#' @param df HFR data framed created by `hfr_process_template()`
+#' @param df HFR data framed created by ``cir_process_template()``
 
 check_inds <-function(df){
 
@@ -138,7 +112,7 @@ check_inds <-function(df){
 
 #' Validate disaggs for export
 #'
-#' @param df HFR data framed created by `hfr_process_template()`
+#' @param df HFR data framed created by ``cir_process_template()``
 
 check_disaggs <- function(df){
 
