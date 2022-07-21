@@ -18,7 +18,7 @@ cir_processing <- function(filepath) {
 
   #join to reference table
 
-  # df <-  cir_wide_refjoin(df)
+   df <-  cir_wide_refjoin(df)
 
   #reshape wide to match long df (only affects wide format)
   df <- cir_gather(df)
