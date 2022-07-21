@@ -28,7 +28,8 @@ cir_gather <- function(df){
 
     #reorganize
     df <- dplyr::select(df, reportingperiod:psnu, indicator,sex, age, population, otherdisaggregate, numdenom, val) %>%
-      mutate(temp_type = ifelse(endsWith(indicator, "....."), "Semi-wide", "Wide"))
+      mutate(temp_type = ifelse(endsWith(indicator, "....."), "Semi-wide", "Wide")
+             )
   }
 
   return(df)
