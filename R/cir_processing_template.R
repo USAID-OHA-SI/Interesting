@@ -18,8 +18,8 @@ cir_processing <- function(filepath) {
   #remove any extra columns
   df <- cir_restrict_cols(df)
 
-  #join to reference table
-   df <-  cir_wide_refjoin(df)
+  #join to reference table - need to update with the new reference table from Nashiva
+       # df <-  cir_wide_refjoin(df)
 
   #reshape wide to match long df (only affects wide format)
   df <- cir_gather(df)
