@@ -35,7 +35,8 @@ check_output_cols <- function(df){
                 "operatingunit", "psnu", "indicator",
                 "sex", "ageasentered", "otherdisaggregate_sub",
                 "otherdisaggregate", "numeratordenom", "val",
-                "temp_type", "period_meta", "version_meta", "type_meta","filepaths")
+                "temp_type", "period_meta", "version_meta", "type_meta","filepaths",
+                "file_size", "google_id")
 
   submitted <- names(df)
 
@@ -184,11 +185,11 @@ check_content <- function(df, output_path, datim_path) {
 
   #LOAD SOMEWHERE --------------------------
 
-  # cntry <- df %>% distinct(operatingunit) %>% pull()
-  # uid <- glamr::get_ouuid(cntry)
-  #
-  # df_orgs <- Wavelength::pull_hierarchy(uid, username = datim_user(), password = datim_pwd())
-  # df_mechs <- pull_mech(usaid_only = TRUE, ou_sel = cntry, folderpath_output = NULL)
+  cntry <- df %>% distinct(operatingunit) %>% pull()
+  uid <- glamr::get_ouuid(cntry)
+
+  df_orgs <- Wavelength::pull_hierarchy(uid, username = datim_user(), password = datim_pwd())
+  df_mechs <- pull_mech(usaid_only = TRUE, ou_sel = cntry, folderpath_output = NULL)
 
   cat("\nChecking operatingunits values ...")
 
