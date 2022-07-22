@@ -3,6 +3,7 @@
 #' @param filepath Full filename
 #'
 #' @export
+#' @return CIR Submission as Tibble
 
 cir_processing <- function(filepath) {
 
@@ -13,6 +14,8 @@ cir_processing <- function(filepath) {
 
   #store meta df - come back to google ID
   meta_df <- cir_store_meta(filepath)
+
+  print(meta_df)
 
   #import template sheet(s) - this is being being built locally right now (can we do this from drive and use the filename to identify)
   #in order for this to work, we need the naming conventions to be consistent
@@ -36,7 +39,7 @@ cir_processing <- function(filepath) {
   df <- cir_munge_string(df)
 
 
-  df <- cir_join_meta(df)
+  df <- cir_join_meta(df, df_meta = meta_df)
 
 
   validate_output(df)

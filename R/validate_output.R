@@ -74,7 +74,7 @@ check_orgunituids <-function(df){
 check_mechs <-function(df){
 
   #missing mechanisms?
-  missing_mechs<- count_missing(df, mech_code)
+  missing_mechs <- count_missing(df, mech_code)
 
   #mechanisms
   mech_list <- unique(df$mech_code) %>% sort() %>% paste(collapse = ", ") %>% crayon::blue()
@@ -157,13 +157,16 @@ check_content <- function(df, output_path, datim_path) {
   # }
 
 
-  #LOAD SOMEWHERE --------------------------
+  # LOAD SOMEWHERE
 
-  cntry <- df %>% distinct(operatingunit) %>% pull()
+  cntry <- df %>%
+    dplyr::distinct(operatingunit) %>%
+    dplyr::pull()
+
   uid <- glamr::get_ouuid(cntry)
 
-  df_orgs <- Wavelength::pull_hierarchy(uid, username = datim_user(), password = datim_pwd())
-  df_mechs <- pull_mech(usaid_only = TRUE, ou_sel = cntry, folderpath_output = NULL)
+  df_orgs <- Wavelength::pull_hierarchy(uid, username = glamr::datim_user(), password = glamr::datim_pwd())
+  df_mechs <- Wavelength::pull_mech(usaid_only = TRUE, ou_sel = cntry, folderpath_output = NULL)
 
   cat("\nChecking operatingunits values ...")
 
