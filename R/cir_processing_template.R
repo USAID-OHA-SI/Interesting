@@ -1,3 +1,9 @@
+#' Process CIR Submissions
+#'
+#' @param filepath Full filename
+#'
+#' @export
+
 cir_processing <- function(filepath) {
 
   #run template column storing from Interesting/data-raw/template_columns.R
