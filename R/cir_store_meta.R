@@ -2,18 +2,20 @@
 #'
 #' @description store meta data information for later validations
 #'
+#' @note TODO - This seems similar to `cir_extract_meta` function. Try this for meta: identify, extract, validate and store
+#'
 #' @param filepath filepath to sumbitted template
 #'
 #' @export
 #'
 #' @examples
 #' \dontrun{
-#' # meta_df <- cir_store_meta(filepath)
+#' # meta_df <- cir_store_meta(filepath)}
 
 cir_store_meta <- function(filepath){
 
   if(is_metatab(filepath)){
-    metatable <- readxl::read_excel(filepath, range = "meta!B1:E2") %>%
+    metatable <- readxl::read_excel(filepath, range = "meta!B1:E2") %>% # BK - What if the meta tab is moved?
       stack() %>%
       rename(mvalue = values,
              mtype = ind) %>%
@@ -33,7 +35,7 @@ cir_store_meta <- function(filepath){
 
 
   } else {
-    meta <- NA
+    meta_df <- NA
   }
 
   return(meta_df)

@@ -1,5 +1,7 @@
 #' Determine whether meta tab exists
 #'
+#' @note TODY - Change function name to `has_metatab`
+#'
 #' @export
 #' @param filepath filepath to sumbitted template
 
@@ -38,14 +40,14 @@ cir_extract_meta <- function(filepath, meta_type = "type"){
   if(is_metatab(filepath)){
     metatable <- readxl::read_excel(filepath, range = "meta!B1:E2") %>%
       stack() %>%
-      rename(mvalue = values,
-             mtype = ind) %>%
-      select(mtype, mvalue)
+      dplyr::rename(mvalue = values, mtype = ind) %>%
+      dplyr::select(mtype, mvalue)
 
     meta <- metatable %>%
-      dplyr::mutate(mtype =
-                      stringr::str_remove_all(mtype,
-                                              "Template |CIRG Reporting |, eg 2020.1|perating |nit|\\/Country|\r\n")
+      dplyr::mutate(
+        mtype = stringr::str_remove_all(
+          mtype,
+          "Template |CIRG Reporting |, eg 2020.1|perating |nit|\\/Country|\r\n")
                     %>% tolower) %>%
       dplyr::filter(mtype == meta_type) %>%
       dplyr::pull()

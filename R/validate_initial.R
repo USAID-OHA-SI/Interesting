@@ -4,7 +4,6 @@
 #'
 #' @export
 
-
 validate_initial <- function(filepath){
 
   #initial validation before proceeding to see if any CIRG named tabs
@@ -14,8 +13,6 @@ validate_initial <- function(filepath){
   check_tabs(filepath)
 
 }
-
-# --------------------------------------------------------
 
 #' Determine if there are tabs to import
 #'
@@ -42,8 +39,6 @@ is_cirgtab <- function(filepath){
 
 }
 
-# -----------------------------
-
 #' Inspect Meta data
 #'
 #' @param filepath filepath to sumbitted template
@@ -58,6 +53,7 @@ check_meta <- function(filepath){
     df <- cir_import(filepath)
     type <- ifelse(var_exists(df, "val"), "Long [no meta provided]", "Wide [no meta provided]")
     temp_version <- "[no meta provided]"
+    reppd_meta <- "[no period provided]"
   }
 
   temp_version <- crayon::blue(paste(type, temp_version))
