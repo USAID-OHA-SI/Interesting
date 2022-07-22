@@ -10,18 +10,31 @@ cir_processing <- function(filepath) {
   #run template column storing from Interesting/data-raw/template_columns.R
 
   #validation checks
+  # TODO - Validate Initial should return something to help with next steps
+
   validate_initial(filepath)
 
   #store meta df - come back to google ID
   meta_df <- cir_store_meta(filepath)
 
-  print(meta_df)
+  # TODO - Validate Meta before proceeding
+  # Eg: check ou/country & reporting period
+  if (is.na(meta_df$ou_meta) | is.na(meta_df$period_meta)) {
+    cat(crayon::red("\n---- METADATA ERRORS ----"),
+        "\nMissing OU/Country name and/or Reporting period",
+        "\nCountry:", meta_df$ou_meta,
+        "\nReporting period:", meta_df$period_meta,
+        "\n"
+    )
+
+    return(tibble::tibble())
+  }
 
   #import template sheet(s) - this is being being built locally right now (can we do this from drive and use the filename to identify)
   #in order for this to work, we need the naming conventions to be consistent
   df <- cir_import(filepath)
 
-  #validation checks - VMMC doesnt work on this one because of the names issue - come back to that!
+  #validation checks - VMMC does not work on this one because of the names issue - come back to that!
   validate_import(df)
 
   #remove any extra columns
@@ -45,7 +58,6 @@ cir_processing <- function(filepath) {
   validate_output(df)
 
   return(df)
-
 }
 
 

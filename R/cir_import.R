@@ -16,14 +16,20 @@ cir_import <- function(filepath){
     readxl::excel_sheets() %>%
     #setdiff("meta") %>%
     stringr::str_subset("CIRG") %>%
-    purrr::map_dfr(.f = ~ readxl::read_excel(filepath, sheet = .x, skip = 2, col_types = "text"))
-  # %>%
-  #   rename('vmmc_ae..m.sitetype:unknown..n' = vmmc_ae..m.unknown..n...30,
-  #          'vmmc_ae..m.aetype:unknown..n' = vmmc_ae..m.unknown..n...20)
-  #
+    purrr::map_dfr(function(.x) {
+      logger::log_info("\nImporting data from: {.x} ...")
+      df_tab <- readxl::read_excel(filepath, sheet = .x, skip = 2, col_types = "text")
+      logger::log_info("\\Rows count = {nrow(df_tab)}")
+      return(df_tab)
+    })
+    #purrr::map_dfr(.f = ~ readxl::read_excel(filepath, sheet = .x, skip = 2, col_types = "text"))
+    # %>%
+    #   rename('vmmc_ae..m.sitetype:unknown..n' = vmmc_ae..m.unknown..n...30,
+    #          'vmmc_ae..m.aetype:unknown..n' = vmmc_ae..m.unknown..n...20)
+    #
+
   if("mechanismid" %in% names(df))
     df <- dplyr::rename(df, mech_code = mechanismid)
 
   return(df)
-
 }
