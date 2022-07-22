@@ -46,16 +46,20 @@ cir_munge_string <- function(df){
   return(df)
 }
 
+#' Join Meta to Dataset
+#'
+#' @param df      CIR data frame imported via `cir_import()`
+#' @param df_meta CIR Meta data
+#'
+#' @export
+#'
+cir_join_meta <- function(df, df_meta) {
 
-cir_join_meta <- function(df) {
-
-df <-   df %>%
-    left_join(meta_df, by = c("operatingunit" = "ou_meta"
-                             # , "reportingperiod" = "period_meta"
-                              ))
-
-return(df)
-
+  df %>%
+      dplyr::left_join(df_meta,
+                       by = c("operatingunit" = "ou_meta"
+                               #,"reportingperiod" = "period_meta"
+                                ))
 }
 
 

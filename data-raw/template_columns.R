@@ -15,6 +15,8 @@ usethis::use_data(template_cols_long, overwrite = TRUE)
     purrr::map_dfr(.f = ~ readxl::read_excel("data-raw/templates/FY22_CIRG_Submission_Semi_Wide_ All_Technical_Areas.xlsx", sheet = .x, skip = 2, col_types = "text")) %>%
     names()
 
+  usethis::use_data(template_cols_semiwide, overwrite = TRUE)
+
  #Store column names for wide template -------------------
 
   template_path <- "data-raw/templates/Wide - by Technical Area/"
@@ -61,6 +63,15 @@ usethis::use_data(template_cols_long, overwrite = TRUE)
  temp_wide_prep <- lst2[[6]]
  temp_wide_sch <- lst2[[7]]
  temp_wide_vmmc <- lst2[[8]]
+
+ usethis::use_data(temp_wide_dreams, overwrite = TRUE)
+ usethis::use_data(temp_wide_gender, overwrite = TRUE)
+ usethis::use_data(temp_wide_kp, overwrite = TRUE)
+ usethis::use_data(temp_wide_lab, overwrite = TRUE)
+ usethis::use_data(temp_wide_ovc, overwrite = TRUE)
+ usethis::use_data(temp_wide_prep, overwrite = TRUE)
+ usethis::use_data(temp_wide_sch, overwrite = TRUE)
+ usethis::use_data(temp_wide_vmmc, overwrite = TRUE)
 
 
   #-----
