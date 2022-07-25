@@ -55,23 +55,23 @@ usethis::use_data(template_cols_long, overwrite = TRUE)
 
  # glue("temp_wide_{tab_type[2]}") <- lst2[[2]]
 
- temp_wide_dreams <- lst2[[1]]
- temp_wide_gender <- lst2[[2]]
- temp_wide_kp <- lst2[[3]]
- temp_wide_lab <- lst2[[4]]
- temp_wide_ovc <- lst2[[5]]
- temp_wide_prep <- lst2[[6]]
- temp_wide_sch <- lst2[[7]]
- temp_wide_vmmc <- lst2[[8]]
+ template_wide_dreams <- lst2[[1]]
+ template_wide_gender <- lst2[[2]]
+ template_wide_kp <- lst2[[3]]
+ template_wide_lab <- lst2[[4]]
+ template_wide_ovc <- lst2[[5]]
+ template_wide_prep <- lst2[[6]]
+ template_wide_sch <- lst2[[7]]
+ template_wide_vmmc <- lst2[[8]]
 
- usethis::use_data(temp_wide_dreams, overwrite = TRUE)
- usethis::use_data(temp_wide_gender, overwrite = TRUE)
- usethis::use_data(temp_wide_kp, overwrite = TRUE)
- usethis::use_data(temp_wide_lab, overwrite = TRUE)
- usethis::use_data(temp_wide_ovc, overwrite = TRUE)
- usethis::use_data(temp_wide_prep, overwrite = TRUE)
- usethis::use_data(temp_wide_sch, overwrite = TRUE)
- usethis::use_data(temp_wide_vmmc, overwrite = TRUE)
+ usethis::use_data(template_wide_dreams, overwrite = TRUE)
+ usethis::use_data(template_wide_gender, overwrite = TRUE)
+ usethis::use_data(template_wide_kp, overwrite = TRUE)
+ usethis::use_data(template_wide_lab, overwrite = TRUE)
+ usethis::use_data(template_wide_ovc, overwrite = TRUE)
+ usethis::use_data(template_wide_prep, overwrite = TRUE)
+ usethis::use_data(template_wide_sch, overwrite = TRUE)
+ usethis::use_data(template_wide_vmmc, overwrite = TRUE)
 
 
   #-----

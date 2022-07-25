@@ -52,7 +52,7 @@ cir_munge_string <- function(df){
 #' @param df_meta CIR Meta data
 #'
 #' @export
-#'
+
 cir_join_meta <- function(df, df_meta) {
 
   df %>%
