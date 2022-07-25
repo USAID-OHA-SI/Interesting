@@ -8,7 +8,7 @@
 
 validate_output <- function(df, output_path, content=FALSE, datim_path=NULL){
 
-  check_output_cols(df)
+  check_output_cols(df) # Looks like a repetition
   check_orgunituids(df)
   check_mechs(df)
   check_content(df)
@@ -81,7 +81,8 @@ check_mechs <-function(df){
 
   #print validation
   cat("\nAre there any missing mech_codes?", missing_mechs,
-      "\nWhat mechanism are included?", mech_list)
+      "\nWhat mechanism are included?", mech_list,
+      "\n")
 }
 
 
@@ -217,8 +218,8 @@ check_content <- function(df, output_path, datim_path) {
 
   df <- df %>%
     is_ou_valid(df_orgs = df_orgs) %>%
-     is_mech_valid(df_mechs = df_mechs) %>%
-     is_mech4ou(df_mechs = df_mechs) %>%
+    is_mech_valid(df_mechs = df_mechs) %>%
+    is_mech4ou(df_mechs = df_mechs) %>%
     is_orgunituid_valid(df_orgs = df_orgs) %>%
     is_orgunituid4ou(df_orgs = df_orgs)
 

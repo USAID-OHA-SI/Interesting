@@ -12,3 +12,6 @@ is_metatab(filepath)
 \description{
 Determine whether meta tab exists
 }
+\note{
+TODY - Change function name to \code{has_metatab}
+}
