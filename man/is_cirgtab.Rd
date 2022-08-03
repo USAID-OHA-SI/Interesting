@@ -12,3 +12,6 @@ is_cirgtab(filepath)
 \description{
 Determine if there are tabs to import
 }
+\note{
+TODO - Change function name to \code{has_cirtab}
+}

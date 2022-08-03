@@ -4,7 +4,7 @@
 \alias{cir_extract_meta}
 \title{Extract Meta Data Information about Template}
 \usage{
-cir_extract_meta(filepath, meta_type = "type")
+cir_extract_meta(filepath, meta_type = NULL)
 }
 \arguments{
 \item{filepath}{filepath to sumbitted template}
