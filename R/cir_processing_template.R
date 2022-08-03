@@ -14,7 +14,8 @@ cir_processing <- function(filepath) {
 
   if (interactive()) {
     cat("\n---- STATUS ----",
-        "Is submission valid? ", paint_iftrue(vinit$subm_valid))
+        "\nIs submission valid? ", paint_iftrue(vinit$subm_valid),
+        "\n")
   }
 
   if (!vinit$subm_valid)
@@ -27,16 +28,22 @@ cir_processing <- function(filepath) {
 
   #import template sheet(s) - this is being being built locally right now (can we do this from drive and use the filename to identify)
   #in order for this to work, we need the naming conventions to be consistent
-  df_cirg <- cir_import(filepath)
+  # TODO - Pass valid cirg sheets to cir_import. No need to use `excel_sheets()`
+  df_cirg <- cir_import(filepath, template = vinit$type)
 
   #validation checks - VMMC does not work on this one because of the names issue - come back to that!
-  vimp <- validate_import(df_cirg)
+  # TODO - This validation needs to be done at the tab level given the differences in wide templates
+  # ACTION - Do the validation within the import
+  # ACTION - Do the validation against the specified template type
+  # ACTION - What's the fall back for when data structure does meet the template?
+  #vimp <- validate_import(df_cirg)
 
   #remove any extra columns
-  df_cirg <- cir_restrict_cols(df_cirg)
+  # TODO - Same as above. This needs to be moved in `cir_import()`
+  #df_cirg <- cir_restrict_cols(df_cirg)
 
   #join to reference table - need to update with the new reference table from Nashiva
-  # df <- cir_wide_refjoin(df)
+  # df_cirg <- cir_wide_refjoin(df_cirg)
 
   #reshape wide to match long df (only affects wide format)
   df_cirg <- cir_gather(df_cirg)

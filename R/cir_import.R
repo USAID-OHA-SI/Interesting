@@ -10,17 +10,29 @@
 #'   filepath <- "~/CIRG_FY22_Q1_Zimbabwe_20220211.xlsx"
 #'   df_hfr <- cir_import(filepath) }
 
-cir_import <- function(filepath){
+cir_import <- function(filepath, template = NULL){
+
+  tmp <- ifelse(is.null(template) | is.na(template), "[Not provided]", template)
+
+  logger::log_info("\nImporting template: {tmp} ...")
 
   df <- filepath %>%
     readxl::excel_sheets() %>%
     #setdiff("meta") %>%
     stringr::str_subset("CIRG") %>%
     purrr::map_dfr(function(.x) {
-      logger::log_info("\nImporting data from: {.x} ...")
+      logger::log_info("\nImporting data from sheet: {.x} ...")
+
       df_tab <- readxl::read_excel(filepath, sheet = .x, skip = 2, col_types = "text")
-      logger::log_info("\\Rows count = {nrow(df_tab)}")
-      return(df_tab)
+
+      vimp <- validate_import(df_tab)
+
+      logger::log_info("Rows count = {nrow(df_tab)}")
+
+      print(vimp$validations)
+
+      #return(df_tab)
+      return(vimp$data)
     })
     #purrr::map_dfr(.f = ~ readxl::read_excel(filepath, sheet = .x, skip = 2, col_types = "text"))
     # %>%

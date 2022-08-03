@@ -6,6 +6,9 @@
 
 cir_restrict_cols <- function(df){
 
+  # defaults cols
+  cols <- template_cols_long[1:7]
+
   if(var_exists(df, "val")){
     cols <- intersect(template_cols_long, names(df))
   } else if(var_exists(df, "dreams_fp.....")){ #change this!
@@ -27,7 +30,8 @@ cir_restrict_cols <- function(df){
   } else if(var_exists(df, "vmmc_ae.20_24.male...n")){
     cols <- intersect(template_wide_vmmc, names(df))
   }
-  df <- dplyr::select_at(df, cols)
+
+  df <- dplyr::select_at(df, .vars = vars(all_of(cols)))
 
   return(df)
 }
