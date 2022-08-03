@@ -68,14 +68,15 @@ var_exists <- function(df, var) {
 
 #' Flag Missing Variables
 #'
-#' @export
-#'
 #' @param required list of required vars
 #' @param submitted list of vars pulled from submission
+#'
+#' @export
 #'
 flag_missing <- function(required, submitted){
 
   missing <- setdiff(required, submitted)
+
   if(length(missing) > 0){
     missing <- crayon::yellow(missing)
   } else {
@@ -86,9 +87,11 @@ flag_missing <- function(required, submitted){
 }
 
 #' Flag Extra Variables
-#' @export
+#'
 #' @param required list of required vars
 #' @param submitted list of vars pulled from submission
+#'
+#' @export
 
 flag_extra <- function(required, submitted){
 
