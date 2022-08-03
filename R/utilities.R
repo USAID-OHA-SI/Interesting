@@ -1,19 +1,3 @@
-#' Determine whether meta tab exists
-#'
-#' @note TODY - Change function name to `has_metatab`
-#'
-#' @export
-#' @param filepath filepath to sumbitted template
-
-is_metatab <- function(filepath){
-
-  if(missing(filepath))
-    stop("No filepath provided.")
-
-  shts <- readxl::excel_sheets(filepath)
-  "meta" %in% shts
-}
-
 
 #' Extract Meta Data Information about Template
 #'
@@ -35,27 +19,36 @@ is_metatab <- function(filepath){
 #' #identify OU
 #'   cir_extract_meta(filepath, meta_type = "ou") }
 
-cir_extract_meta <- function(filepath, meta_type = "type"){
+cir_extract_meta <- function(filepath, meta_type = NULL){
 
-  if(is_metatab(filepath)){
-    metatable <- readxl::read_excel(filepath, range = "meta!B1:E2") %>%
-      stack() %>%
-      dplyr::rename(mvalue = values, mtype = ind) %>%
-      dplyr::select(mtype, mvalue)
+  if(!is_metatab(filepath))
+    return(NA)
 
-    meta <- metatable %>%
-      dplyr::mutate(
-        mtype = stringr::str_remove_all(
-          mtype,
-          "Template |CIRG Reporting |, eg 2020.1|perating |nit|\\/Country|\r\n")
-                    %>% tolower) %>%
-      dplyr::filter(mtype == meta_type) %>%
-      dplyr::pull()
+  # Read meta sheet
+  metatable <- readxl::read_excel(
+    path = filepath,
+    #sheet = "meta",
+    range = "meta!B1:E2") %>%
+    utils::stack() %>%
+    dplyr::rename(mvalue = values, mtype = ind) %>%
+    dplyr::select(mtype, mvalue)
 
+  metatable <- metatable %>%
+    dplyr::mutate(
+      mtype = stringr::str_remove_all(
+        string = mtype,
+        pattern = "Template |CIRG Reporting |, eg 2020.1|perating |nit|\\/Country|\r\n"
+      ),
+      mtype = base::tolower(mtype)
+    )
 
-  } else {
-    meta <- NA
-  }
+  if (base::is.null(meta_type))
+    return(metatable)
+
+  # Extract specified value
+  meta <- metatable%>%
+    dplyr::filter(mtype == meta_type) %>%
+    dplyr::pull()
 
   return(meta)
 }
@@ -168,4 +161,43 @@ paint_blue <- function(txt) {
 paint_yellow <- function(txt) {
   msg <- rayon::yellow(txt)
   return(msg)
+}
+
+#' Paint if na
+#'
+#' @param txt text to be painted and printed
+#' @param true_paint crayon function to execute if ~is.na(txt)
+#' @export
+#'
+paint_ifna <- function(txt,
+                       true_paint = crayon::yellow,
+                       false_paint = crayon::blue) {
+
+  ifelse(base::is.na(txt), true_paint(txt), false_paint(txt))
+}
+
+#' Paint if null
+#'
+#' @param obj text to be painted and printed
+#' @param true_paint crayon function to execute if ~is.na(txt)
+#' @export
+#'
+paint_ifnull <- function(obj,
+                         true_paint = crayon::red,
+                         false_paint = crayon::blue) {
+
+  ifelse(base::is.null(obj), true_paint(obj), false_paint(obj))
+}
+
+#' Paint if true
+#'
+#' @param value text to be painted and printed
+#' @param true_paint crayon function to execute if ~is.na(txt)
+#' @export
+#'
+paint_iftrue <- function(value,
+                         true_paint = crayon::green,
+                         false_paint = crayon::red) {
+
+  ifelse(base::isTRUE(value), true_paint(value), false_paint(value))
 }
