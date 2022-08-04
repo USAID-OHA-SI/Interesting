@@ -1,45 +1,55 @@
 #' Validation on import
 #'
 #' @param df df create during `cir_import()`
+#' @param template submission template
 #'
 #' @export
 
-validate_import <- function(df){
+validate_import <- function(df, template){
 
   # Defaults
-  req_cols <- c()
-  tmp <- NULL
+  tmp <- template
+  req_cols <- NULL
 
   #check columns
   # TODO - Change this to case_when and move it to a separate function: eg: validate_template
   # TODO - Include the core columns into the validations
-  if(var_exists(df, "val")){
+  if(tmp == "Long" & var_exists(df, template_cols_long)){
     req_cols <- template_cols_long
-  } else if(var_exists(df, "dreams_fp.....")){
+  } else if(tmp == "Semi-wide" & var_exists(df, c(template_cols_core, template_cols_disaggs)) & !var_exists(df, template_cols_ind)){
     req_cols <- template_cols_semiwide
-  } else if(var_exists(df, "dreams_fp.15_19.f...d")){
+  } else if(tmp == "Wide" & var_exists(df, template_cols_core) & var_matches(df, "dreams")){
     req_cols <- template_wide_dreams
-  } else if(var_exists(df, "gend_gbv.10_14.f.sexualviolence..n")){
+  } else if(tmp == "Wide" & var_exists(df, template_cols_core) & var_matches(df, "gend_gbv")){
     req_cols <- template_wide_gender
-  } else if(var_exists(df, "tx_new_verify....fsw.n")){
+  } else if(tmp == "Wide" & var_exists(df, template_cols_core) & var_matches(df, "^[ct]_verify")){
     req_cols <- template_wide_kp
-  } else if(var_exists(df, "pmtct_eid_eligible.0_12m..eideligible..n")){
+  } else if(tmp == "Wide" & var_exists(df, template_cols_core) & var_matches(df, "eligible|sample|result")){
     req_cols <- template_wide_lab
-  } else if(var_exists(df, "ovc_offer.u1.m...n")){
+  } else if(tmp == "Wide" & var_exists(df, template_cols_core) & var_matches(df, "ovc")){
     req_cols <- template_wide_ovc
-  } else if(var_exists(df, "prep_screen.10_14.m...n")){
+  } else if(tmp == "Wide" & var_exists(df, template_cols_core) & var_matches(df, "prep")){
     req_cols <- template_wide_prep
-  } else if(var_exists(df, "sc_arvdisp...tld30_countbottles..n")){
+  } else if(tmp == "Wide" & var_exists(df, template_cols_core) & var_matches(df, "sc")){
     req_cols <- template_wide_sch
-  } else if(var_exists(df, "vmmc_ae.20_24.male...n")){
+  } else if(tmp == "Wide" & var_exists(df, template_cols_core) & var_matches(df, "vmmc")){
     req_cols <- template_wide_vmmc
   }
 
-  missing <- flag_missing(req_cols, names(df))
-  extra <- flag_extra(req_cols, names(df))
-
   # Check multi ous sheets
   ous <- check_distinct_ous(df)
+
+  # Check data structure based on template
+  if (!is.null(req_cols)) {
+    #missing <- flag_missing(req_cols, names(df))
+    missing <- setdiff(req_cols, names(df))
+    #extra <- flag_extra(req_cols, names(df))
+    extra <- setdiff(names(df), req_cols)
+
+  } else {
+    missing <- "[template could not be confirmed]"
+    extra <- missing
+  }
 
   # Restrict Extract Columns
   if (length(extra) > 0) {
@@ -48,7 +58,9 @@ validate_import <- function(df){
 
   # Validations
   vimp <- tibble::tibble(
+    filename = NA_character_,
     sheet = NA_character_,
+    template_confirmed = !is.null(req_cols),
     cols_missing = paste(missing, collapse = ", "),
     cols_extra = paste(extra, collapse = ", "),
     cols_extra_restricted = length(extra) > 0,
@@ -58,12 +70,14 @@ validate_import <- function(df){
 
   #PRINT VALIDATION
   if (interactive()) {
-    cat("\nAre there any missing columns on import?", vimp$cols_missing,
-        "\nAre there any extra columns on import?", vimp$cols_extra)
+    cat("\nAre there any missing columns on import?", paint_yellow(vimp$cols_missing),
+        "\nAre there any extra columns on import?", paint_yellow(vimp$cols_extra),
+        "\n")
   }
 
+  # Return data along with the validations
   return(list(
-    "validation" = vimp,
+    "checks" = vimp,
     "data" = df
   ))
 }
