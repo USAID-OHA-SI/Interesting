@@ -7,7 +7,7 @@
 check_distinct_ous(df)
 }
 \arguments{
-\item{df}{df create during \code{hfr_import()}}
+\item{df}{df create during \code{cir_import()}}
 }
 \description{
 Check OUs listed in operatingunit

@@ -12,3 +12,6 @@ check_meta(filepath)
 \description{
 Inspect Meta data
 }
+\note{
+TODO - This is doing more than checking the metadata.
+}
