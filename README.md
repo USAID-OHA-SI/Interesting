@@ -6,12 +6,25 @@
 <!-- badges: start -->
 <!-- badges: end -->
 
-The goal of Interesting is to …
+### OHA Custom Indicators Reporting (CIR) 
 
-## Installation
+This project was setup to ingest, process and manage CIR data.
 
-You can install the development version of Interesting from
-[GitHub](https://github.com/) with:
+### Installation
+
+The package can be currently installed from the [Github repo / development branch](https://github.com/USAID-OHA-SI/Interesting/tree/develop)
+
+
+```{r}
+remotes::install_github("USAID-OHA-SI/Interesting", ref="develop")
+
+```
+
+### Initial Testing
+
+### Processing flow
+
+### Notes
 
 <!-- ``` r -->
 <!-- # install.packages("devtools") -->
@@ -33,3 +46,7 @@ You can install the development version of Interesting from
 <!-- plot(pressure) -->
 <!-- ``` -->
 <!-- In that case, don't forget to commit and push the resulting figure files, so they display on GitHub and CRAN. -->
+
+---
+
+*Disclaimer: The findings, interpretation, and conclusions expressed herein are those of the authors and do not necessarily reflect the views of United States Agency for International Development. All errors remain our own.*
