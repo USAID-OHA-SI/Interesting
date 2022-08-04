@@ -1,14 +1,14 @@
 #Template Columns ------------------------------
 
-#store column names for long template
-template_cols_long <- readxl::read_excel("data-raw/templates/FY22_CIRG_Submission_Long_All_Technical_Areas.xlsx",
-                                         sheet = "CIRG", col_types = "text", n_max = 0) %>%
-  names()
+ #store column names for long template
+  template_cols_long <- readxl::read_excel("data-raw/templates/FY22_CIRG_Submission_Long_All_Technical_Areas.xlsx",
+                                           sheet = "CIRG", col_types = "text", n_max = 0) %>%
+    names()
 
-usethis::use_data(template_cols_long, overwrite = TRUE)
+  usethis::use_data(template_cols_long, overwrite = TRUE)
 
 
-#store column names for semi_wide template
+ #store column names for semi_wide template
   template_cols_semiwide <- readxl::excel_sheets("data-raw/templates/FY22_CIRG_Submission_Semi_Wide_ All_Technical_Areas.xlsx") %>%
     #setdiff("meta") %>%
     stringr::str_subset("CIRG") %>%
@@ -51,34 +51,45 @@ usethis::use_data(template_cols_long, overwrite = TRUE)
 
   }
 
-#can I use glue?
+  #can I use glue?
 
- # glue("temp_wide_{tab_type[2]}") <- lst2[[2]]
+  # glue("temp_wide_{tab_type[2]}") <- lst2[[2]]
 
- template_wide_dreams <- lst2[[1]]
- template_wide_gender <- lst2[[2]]
- template_wide_kp <- lst2[[3]]
- template_wide_lab <- lst2[[4]]
- template_wide_ovc <- lst2[[5]]
- template_wide_prep <- lst2[[6]]
- template_wide_sch <- lst2[[7]]
- template_wide_vmmc <- lst2[[8]]
+  template_wide_dreams <- lst2[[1]]
+  template_wide_gender <- lst2[[2]]
+  template_wide_kp <- lst2[[3]]
+  template_wide_lab <- lst2[[4]]
+  template_wide_ovc <- lst2[[5]]
+  template_wide_prep <- lst2[[6]]
+  template_wide_sch <- lst2[[7]]
+  template_wide_vmmc <- lst2[[8]]
 
- usethis::use_data(template_wide_dreams, overwrite = TRUE)
- usethis::use_data(template_wide_gender, overwrite = TRUE)
- usethis::use_data(template_wide_kp, overwrite = TRUE)
- usethis::use_data(template_wide_lab, overwrite = TRUE)
- usethis::use_data(template_wide_ovc, overwrite = TRUE)
- usethis::use_data(template_wide_prep, overwrite = TRUE)
- usethis::use_data(template_wide_sch, overwrite = TRUE)
- usethis::use_data(template_wide_vmmc, overwrite = TRUE)
+  usethis::use_data(template_wide_dreams, overwrite = TRUE)
+  usethis::use_data(template_wide_gender, overwrite = TRUE)
+  usethis::use_data(template_wide_kp, overwrite = TRUE)
+  usethis::use_data(template_wide_lab, overwrite = TRUE)
+  usethis::use_data(template_wide_ovc, overwrite = TRUE)
+  usethis::use_data(template_wide_prep, overwrite = TRUE)
+  usethis::use_data(template_wide_sch, overwrite = TRUE)
+  usethis::use_data(template_wide_vmmc, overwrite = TRUE)
 
 
   #-----
 
 
   #store meta data columns
-  template_cols_meta <- template_cols_long %>% setdiff("val")
+  template_cols_value <- "val"
+  template_cols_ind <- "indicator"
+  template_cols_disaggs <- c("sex", "age", "population", "otherdisaggregate", "numdenom")
 
+  template_cols_meta <- template_cols_long %>% setdiff(template_cols_value)
+
+  template_cols_core <- template_cols_long %>%
+    setdiff(c(template_cols_ind, template_cols_disaggs, template_cols_value))
+
+  usethis::use_data(template_cols_value, overwrite = TRUE)
+  usethis::use_data(template_cols_ind, overwrite = TRUE)
+  usethis::use_data(template_cols_disaggs, overwrite = TRUE)
   usethis::use_data(template_cols_meta, overwrite = TRUE)
+  usethis::use_data(template_cols_core, overwrite = TRUE)
 

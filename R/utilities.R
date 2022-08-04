@@ -62,8 +62,22 @@ cir_extract_meta <- function(filepath, meta_type = NULL){
 
 var_exists <- function(df, var) {
 
-  var %in% names(df)
+  #var %in% names(df)
+  all(var %in% names(df))
+}
 
+
+#' Check if any variable matches this pattern
+#'
+#' @param df data frame to check against
+#' @param pattern quoted variable of interest
+#'
+#' @export
+#'
+
+var_matches <- function(df, pattern) {
+  #var %in% names(df)
+  any(stringr::str_detect(string = names(df), pattern = pattern))
 }
 
 #' Flag Missing Variables
@@ -126,6 +140,27 @@ count_missing <- function(df, var){
   return(count)
 }
 
+
+#' Not provided if null
+#'
+#' @param obj text to be printed
+#' @export
+#'
+null_to_chr <- function(obj) {
+  ifelse(is.null(obj), "[not provided]", obj)
+}
+
+
+#' Not available if na
+#'
+#' @param obj text to be printed
+#' @export
+#'
+na_to_chr <- function(obj) {
+  ifelse(is.null(obj), "[not available]", obj)
+}
+
+
 #' Paint console text in red
 #'
 #' @param txt text to be printed
@@ -162,7 +197,7 @@ paint_blue <- function(txt) {
 #' @export
 #'
 paint_yellow <- function(txt) {
-  msg <- rayon::yellow(txt)
+  msg <- crayon::yellow(txt)
   return(msg)
 }
 
