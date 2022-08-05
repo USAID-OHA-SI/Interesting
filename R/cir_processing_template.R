@@ -7,7 +7,12 @@
 
 cir_processing <- function(filepath) {
 
-  #run template column storing from Interesting/data-raw/template_columns.R
+  # TODO - run template column storing from Interesting/data-raw/template_columns.R
+
+  # TODO - Setup processing folder structure
+  # Note - This folder should be excluded from commit
+
+  # TODO - Identify & download submissions
 
   # Initial validation checks
   vinit <- validate_initial(filepath)
@@ -60,7 +65,13 @@ cir_processing <- function(filepath) {
     dplyr::left_join(vinit, by = c("operatingunit" = "ou"))
 
   # Validate output
-  vout <- validate_output(df_cirg)
+  # TODO - Return data along with output validations list(checks = vout, data = df_cirg)
+  df_cirg <- validate_output(df_cirg)
+
+  # Save outputs
+  # TODO - Save processing logs & data: vinit, vimp, vout and df_cirg
+  #
+
 
   return(df_cirg)
 }

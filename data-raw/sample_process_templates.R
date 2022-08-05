@@ -14,6 +14,7 @@ subm %>%
   dplyr::rename(mvalue = values, mtype = ind) %>%
   dplyr::select(mtype, mvalue)
 
+# Metadata
 subm %>%
   dplyr::first() %>%
   cir_extract_meta()
@@ -26,36 +27,23 @@ subm %>%
   dplyr::first() %>%
   check_tabs()
 
-subm %>%
+# Initial Validation
+meta <- subm %>%
   dplyr::first() %>%
   validate_initial()
 
-subm %>%
-  dplyr::first() %>%
-  cir_store_meta()
-
-meta <- subm %>%
-  dplyr::first() %>%
-  check_meta()
-
+# Import & 2nd round of Validation
 df_subm <- subm %>%
   dplyr::first() %>%
   cir_import(template = meta$type)
 
 df_subm$checks
+df_subm$data
+
+# Gather
+df_cirg <- df_subm$data %>% cir_gather()
 
 
-subm %>%
-  dplyr::first() %>%
-  #Interesting::cir_extract_meta()
-  #cir_extract_meta("type")
-  cir_extract_meta()
-
-subm %>%
-  #dplyr::first() %>%
-  dplyr::nth(2) %>%
-  walk(cir_processing)
-  #Interesting::cir_processing()
 
 
 
