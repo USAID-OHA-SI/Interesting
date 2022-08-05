@@ -1,3 +1,77 @@
+#' Setup processing folders
+#'
+#' @param folder
+#' @param dt
+#'
+#' @export
+#'
+cir_setup <- function(folder = "ou_submissions", dt = NULL) {
+
+  # Date
+  curr_dt <- ifelse(is.null(dt),
+                    base::format(base::Sys.Date(), "%Y-%m-%d"),
+                    dt)
+
+  # Processing folder
+  if (!base::dir.exists(file.path(".", folder)))
+    base::dir.create(file.path(".", folder))
+
+  # Current Processing folder
+  dir_curr_proc <- file.path(".", folder) %>%
+    base::file.path(paste0("CIRG-", curr_dt))
+
+  dir_curr_proc %>% base::dir.create()
+
+  # Raw Data
+  dir_curr_proc %>%
+    base::file.path("1-raw") %>%
+    base::dir.create()
+
+  # Metadata - 1 file per submission
+  dir_curr_proc %>%
+    base::file.path("2-meta") %>%
+    base::dir.create()
+
+  # Validations - 3 files per submission
+  dir_curr_proc %>%
+    base::file.path("3-validations") %>%
+    base::dir.create()
+
+  # validated sheets data
+  dir_curr_proc %>%
+    base::file.path("4-processed") %>%
+    base::dir.create()
+
+  # cleaned data
+  dir_curr_proc %>%
+    base::file.path("5-cleaned") %>%
+    base::dir.create()
+
+  # final data
+  dir_curr_proc %>%
+    base::file.path("6-final") %>%
+    base::dir.create()
+}
+
+
+#' Get processing folder path
+#'
+#' @param type
+#' @param dt
+#'
+#' @export
+#'
+cir_folder <- function(type = "raw", dt = NULL) {
+  # Date
+  curr_dt <- ifelse(is.null(dt),
+                    base::format(base::Sys.Date(), "%Y-%m-%d"),
+                    dt)
+
+  # Processing folder
+  base::file.path(paste0("./ou_submissions/CIRG-", curr_dt)) %>%
+    fs::dir_ls(regexp = paste0(type, "$"), recurse = TRUE)
+}
+
 
 #' Extract Meta Data Information about Template
 #'

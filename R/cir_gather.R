@@ -6,9 +6,9 @@
 
 cir_gather <- function(df){
 
+  # TODO - No need to store template type here. Pull it from meta
   if(var_exists(df, "val")){
-    df <- df %>%
-      mutate(temp_type = "Long")
+    df <- df %>% mutate(temp_type = "Long")
 
     #only need to gather if the data set is wide (will not have indicator as column)
 
@@ -18,7 +18,8 @@ cir_gather <- function(df){
     data_cols <- setdiff(names(df), template_cols_meta)
 
     #reshape from wide to long
-    df <- tidyr::gather(df, indicator, val, all_of(data_cols), na.rm = TRUE)
+    df <- df %>%
+      tidyr::gather(indicator, val, all_of(data_cols), na.rm = TRUE)
 
     if(any(stringr::str_detect(df$indicator, ".n"))) {
       #seperate former col names into indicator & disaggregates
@@ -27,12 +28,14 @@ cir_gather <- function(df){
     }
 
     #reorganize
-    df <- dplyr::select(df, reportingperiod:psnu, indicator,sex, age, population, otherdisaggregate, numdenom, val) %>%
-      mutate(temp_type = ifelse(endsWith(indicator, "....."), "Semi-wide", "Wide")
-             )
+    df <- df %>% dplyr::select(
+        reportingperiod:psnu, indicator,sex, age,
+        population, otherdisaggregate, numdenom, val) %>%
+      mutate(temp_type = ifelse(endsWith(indicator, "....."),
+                                "Semi-wide",
+                                "Wide"))
   }
 
   return(df)
-
 }
 
