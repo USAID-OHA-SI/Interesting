@@ -74,6 +74,7 @@ is_metatab <- function(filepath){
 
   shts <- readxl::excel_sheets(filepath)
 
+  # TODO - Make sure to capture all the cases
   "meta" %in% shts
 }
 
