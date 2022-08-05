@@ -31,6 +31,9 @@ cir_processing <- function(filepath) {
   # TODO - Pass valid cirg sheets to cir_import. No need to use `excel_sheets()`
   df_cirg <- cir_import(filepath, template = vinit$type)
 
+  # TODO - Store sheet level validation
+  df_vimp <- df_cirg$checks
+
   #validation checks - VMMC does not work on this one because of the names issue - come back to that!
   # TODO - This validation needs to be done at the tab level given the differences in wide templates
   # ACTION - Do the validation within the import
@@ -46,7 +49,7 @@ cir_processing <- function(filepath) {
   # df_cirg <- cir_wide_refjoin(df_cirg)
 
   #reshape wide to match long df (only affects wide format)
-  df_cirg <- cir_gather(df_cirg)
+  df_cirg <- cir_gather(df_cirg$data)
 
   #Munge string
   df_cirg <- cir_munge_string(df_cirg)

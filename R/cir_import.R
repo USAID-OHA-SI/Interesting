@@ -20,7 +20,7 @@ cir_import <- function(filepath, template = NULL){
   logger::log_info("\nSubmission template: {null_to_chr(tmp)} ...")
 
   df <- filepath %>%
-    readxl::excel_sheets() %>%
+    readxl::excel_sheets() %>% # TODO - Return sheets_valid from `vinit`
     stringr::str_subset("CIRG") %>%
     purrr::map_dfr(function(.x) {
 
@@ -52,11 +52,6 @@ cir_import <- function(filepath, template = NULL){
       #return(df_tab)
       return(vimp$data)
     })
-    #purrr::map_dfr(.f = ~ readxl::read_excel(filepath, sheet = .x, skip = 2, col_types = "text"))
-    # %>%
-    #   rename('vmmc_ae..m.sitetype:unknown..n' = vmmc_ae..m.unknown..n...30,
-    #          'vmmc_ae..m.aetype:unknown..n' = vmmc_ae..m.unknown..n...20)
-    #
 
   return(list(
     "checks" = checks,
