@@ -8,12 +8,22 @@
 
 validate_output <- function(df, output_path, content=FALSE, datim_path=NULL){
 
-  check_output_cols(df) # Looks like a repetition
+  if (interactive()) {
+    cat("\n---- OUTPUT VALIDATIONS ----",
+        "\n---- Missing Values ----")
+  }
+
+  check_output_cols(df) # NOTE - Looks like a repetition
   check_orgunituids(df)
   check_mechs(df)
-  check_content(df)
   #check_inds(df)
   #check_disaggs(df)
+
+  if (interactive()) {
+    cat("\n---- Invalid Values ----")
+  }
+
+  check_content(df)
 
   # #optional check
   # if (content & !is.null(datim_path)) {
@@ -69,7 +79,7 @@ check_orgunituids <-function(df){
 
 #' Validate mechanisms for export
 #'
-#' @param df HFR data framed created by ``cir_process_template()``
+#' @param df HFR data framed created by `cir_process_template()`
 
 check_mechs <-function(df){
 

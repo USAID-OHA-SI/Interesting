@@ -20,13 +20,30 @@ cir_import <- function(filepath, template = NULL){
   logger::log_info("\nSubmission template: {null_to_chr(tmp)} ...")
 
   df <- filepath %>%
-    readxl::excel_sheets() %>% # TODO - Return sheets_valid from `vinit`
+    readxl::excel_sheets() %>% # TODO - Use sheets_valid from `vinit`
     stringr::str_subset("CIRG") %>%
     purrr::map_dfr(function(.x) {
 
+      # Notification
+      if (interactive()) {
+        cat("\n---- IMPORTING SHEET ----",
+            "\nCIRG sheet name: ", paint_blue(.x),
+            "\n")
+      }
+
       logger::log_info("\nImporting data from sheet: {.x} ...")
 
-      df_tab <- readxl::read_excel(filepath, sheet = .x, skip = 2, col_types = "text")
+      # Read data from excel sheet
+      df_tab <- readxl::read_excel(filepath,
+                                   sheet = .x,
+                                   skip = 2,
+                                   col_types = "text")
+
+      # Notification
+      if (interactive()) {
+        cat("\nRows count: ", paint_blue(nrow(df_tab)),
+            "\n")
+      }
 
       logger::log_info("Rows count = {nrow(df_tab)}")
 
@@ -37,7 +54,13 @@ cir_import <- function(filepath, template = NULL){
 
       # Skip import validations
       if (is.null(tmp)) {
-        logger::log_info("Skipping import validations ...")
+        logger::log_info("\nSkipping import validations ...")
+
+        df_tab <- df_tab %>%
+          dplyr::mutate(temp_type = NA_character_,
+                        sheet = .x,
+                        row_id = dplyr::row_number() + 2)
+
         return(df_tab)
       }
 
@@ -48,6 +71,11 @@ cir_import <- function(filepath, template = NULL){
         dplyr::mutate(filename = basename(filepath), sheet = .x)
 
       checks <<- dplyr::bind_rows(checks, vimp$checks)
+
+      vimp$data <- vimp$data %>%
+        dplyr::mutate(temp_type = template,
+                      sheet = .x,
+                      row_id = dplyr::row_number() + 2)
 
       #return(df_tab)
       return(vimp$data)

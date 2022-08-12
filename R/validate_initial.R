@@ -136,8 +136,8 @@ check_meta <- function(filepath){
 
     cat("\n--- METADATA ----",
         "\nFilename:", crayon::blue(meta$filename),
-        "\nHas meta sheet", paint_iftrue(meta$has_meta),
-        "\nHas valid metadata", paint_iftrue(meta$has_valid_meta),
+        "\nHas meta sheet?", paint_iftrue(meta$has_meta),
+        "\nHas valid metadata?", paint_iftrue(meta$has_valid_meta),
         "\nOU/Country:", paint_ifna(meta$ou),
         "\nWhat template was submitted?", crayon::blue(paste(meta$type, meta$version)),
         "\nWhat reporting period?", paint_ifna(meta$period),
@@ -183,7 +183,7 @@ check_tabs <- function(filepath){
   #PRINT and/or LOG VALIDATION
 
   if (interactive()) {
-    cat("\n---- DATA ----",
+    cat("\n---- DATA SHEETS ----",
         "\nHas CIRG Sheets? ", paint_iftrue(cirg$has_cirg_sheets),
         "\nNumber of sheets: ", cirg$sheets_count,
         "\nAll sheets [valid sheet must be labeled 'CIRG']: ", paint_blue(paste(tabs, collapse = ", ")),

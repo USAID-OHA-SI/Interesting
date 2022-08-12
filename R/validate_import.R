@@ -43,6 +43,7 @@ validate_import <- function(df, template){
   if (!is.null(req_cols)) {
     #missing <- flag_missing(req_cols, names(df))
     missing <- setdiff(req_cols, names(df))
+
     #extra <- flag_extra(req_cols, names(df))
     extra <- setdiff(names(df), req_cols)
 
@@ -52,7 +53,7 @@ validate_import <- function(df, template){
   }
 
   # Restrict Extract Columns
-  if (length(extra) > 0) {
+  if (length(extra) > 0 & !is.null(req_cols)) {
     df <- cir_restrict_cols(df)
   }
 
@@ -64,14 +65,19 @@ validate_import <- function(df, template){
     cols_missing = paste(missing, collapse = ", "),
     cols_extra = paste(extra, collapse = ", "),
     cols_extra_restricted = length(extra) > 0,
+    has_data = nrow(df) > 0,
     has_multi_ous = length(ous) > 1,
     ous = paste0(ous, collapse = ", ")
   )
 
   #PRINT VALIDATION
   if (interactive()) {
-    cat("\nAre there any missing columns on import?", paint_yellow(vimp$cols_missing),
+    cat("\n---- IMPORT VALIDATIONS ----"
+        "\nAre there any missing columns on import?", paint_yellow(vimp$cols_missing),
         "\nAre there any extra columns on import?", paint_yellow(vimp$cols_extra),
+        "\nIs sheet empty?", paint_iftrue(!vimp$has_data),
+        "\nHas multiple ous?", paint_iftrue(vimp$has_multi_ous),
+        "\nOUs: ", paint_iftrue(vimp$ous),
         "\n")
   }
 
@@ -102,11 +108,11 @@ check_distinct_ous <- function(df){
   ous_note <- ifelse(ous_check == TRUE, crayon::yellow(ous_list), crayon::blue(ous_list))
 
   #print validation
-  if (interactive()) {
-    cat("\nIs there just one OU (for non regional OUs)?", !ous_check,
-        "\nOU(s): ", ous_note,
-        "\n")
-  }
+  # if (interactive()) {
+  #   cat("\nIs there just one OU (for non regional OUs)?", !ous_check,
+  #       "\nOU(s): ", ous_note,
+  #       "\n")
+  # }
 
   return(ous)
 }

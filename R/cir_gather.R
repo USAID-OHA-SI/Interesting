@@ -28,7 +28,8 @@ cir_gather <- function(df){
     }
 
     #reorganize
-    df <- df %>% dplyr::select(
+    df <- df %>%
+      dplyr::select(
         reportingperiod:psnu, indicator,sex, age,
         population, otherdisaggregate, numdenom, val) %>%
       mutate(temp_type = ifelse(endsWith(indicator, "....."),

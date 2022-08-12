@@ -5,7 +5,7 @@
 #'
 #' @export
 #'
-cir_setup <- function(folder = "ou_submissions", dt = NULL) {
+cir_setup <- function(folder = "cirg-submissions", dt = NULL) {
 
   # Date
   curr_dt <- ifelse(is.null(dt),
@@ -24,12 +24,17 @@ cir_setup <- function(folder = "ou_submissions", dt = NULL) {
 
   # Raw Data
   dir_curr_proc %>%
+    base::file.path("0-reference") %>%
+    base::dir.create()
+
+  # Raw Data
+  dir_curr_proc %>%
     base::file.path("1-raw") %>%
     base::dir.create()
 
   # Metadata - 1 file per submission
   dir_curr_proc %>%
-    base::file.path("2-meta") %>%
+    base::file.path("2-metadata") %>%
     base::dir.create()
 
   # Validations - 3 files per submission
@@ -42,14 +47,24 @@ cir_setup <- function(folder = "ou_submissions", dt = NULL) {
     base::file.path("4-processed") %>%
     base::dir.create()
 
+  # transformation sheets data
+  dir_curr_proc %>%
+    base::file.path("5-transformed") %>%
+    base::dir.create()
+
   # cleaned data
   dir_curr_proc %>%
-    base::file.path("5-cleaned") %>%
+    base::file.path("6-cleaned") %>%
     base::dir.create()
 
   # final data
   dir_curr_proc %>%
-    base::file.path("6-final") %>%
+    base::file.path("7-final") %>%
+    base::dir.create()
+
+  # archived
+  dir_curr_proc %>%
+    base::file.path("7-archive") %>%
     base::dir.create()
 }
 
@@ -68,10 +83,80 @@ cir_folder <- function(type = "raw", dt = NULL) {
                     dt)
 
   # Processing folder
-  base::file.path(paste0("./ou_submissions/CIRG-", curr_dt)) %>%
+  folder <- base::file.path(paste0("./cirg-submissions/CIRG-", curr_dt)) %>%
     fs::dir_ls(regexp = paste0(type, "$"), recurse = TRUE)
+
+  if (!base::dir.exists(folder)) {
+    usethis::ui_warn(glue::glue("Folder does not exist: {folder}"))
+    return(NULL)
+  }
+
+  return(folder)
 }
 
+
+#' Output intermediate data for files
+#'
+#' @param .df_out Data to be outputs
+#' @param .subm   Submission file
+#' @param .name   Output base name - no extension needed, default is `.csv`
+#' @param type    Output data type, default is set to metadata
+#'
+#' @export
+#'
+cir_output <- function(.df_out, .subm, .name,
+                       type = "metadata") {
+
+  # Process Date
+  pdate <- .subm %>%
+    dirname() %>%
+    dirname() %>%
+    basename() %>%
+    str_remove("CIRG-")
+
+  # Output directories
+  dir_out <- case_when(
+    type == "metadata" ~ cir_folder(type = "metadata", dt = pdate),
+    type == "validations" ~ cir_folder(type = "validations", dt = pdate),
+    type == "processed" ~ cir_folder(type = "processed", dt = pdate),
+    type == "transformed" ~ cir_folder(type = "transformed", dt = pdate),
+    type == "cleaned" ~ cir_folder(type = "cleaned", dt = pdate),
+    type == "final" ~ cir_folder(type = "final", dt = pdate),
+    TRUE ~ .subm %>% dirname() %>% dirname()
+  )
+
+  file_out <- .subm %>%
+    base::basename() %>%
+    stringr::str_remove(".xlsx") %>%
+    base::paste0(" - ", .name, ".csv")
+
+  file_out %>%
+    base::file.path(dir_out, .) %>%
+    readr::write_csv(x = .df_out, file = ., na = "")
+}
+
+
+#' Archive submissions files
+#'
+#' @param .subm   Submission file
+#'
+#' @export
+#'
+cir_archive <- function(.subm) {
+
+  # Process Date
+  pdate <- .subm %>%
+    dirname() %>%
+    dirname() %>%
+    basename() %>%
+    str_remove("CIRG-")
+
+  # archive directories
+  dir_arch <- cir_folder(type = "archive", dt = pdate)
+
+  fs::file_move(path = filepath,
+                new_path = file.path(dir_arch, basename(filepath)))
+}
 
 #' Extract Meta Data Information about Template
 #'
