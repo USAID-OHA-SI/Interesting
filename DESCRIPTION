@@ -4,12 +4,40 @@ Version: 0.0.0.9000
 Authors@R: c(
     person("Karishma", "Srikanth", , "ksrikanth@usaid.gov", role = c("aut", "cre")),
     person("Nelly", "Maina", , "nmaina@usaid.gov", role = c("aut")),
-    person("Nashiva", "McDavid", , "nmcdavid@usaid.gov", role = c("aut")))
+    person("Nashiva", "McDavid", , "nmcdavid@usaid.gov", role = c("aut")),
+    person("Baboyma", "Kagniniwa", , "bkagniniwa@usaid.gov", role = c("aut")))
 Description: Processing and validation scripts for CIRG Quarterly Data
 License: MIT + file LICENSE
 Encoding: UTF-8
+LazyData: true
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.1.2
 Depends: 
     R (>= 2.10)
-LazyData: true
+Imports: 
+    crayon,
+    dplyr(>= 1.0.0),
+    lubridate,
+    magrittr,
+    purrr,
+    readr,
+    readxl,
+    stats,
+    stringr,
+    tibble,
+    tidyr,
+    vroom
+Suggests: 
+    curl,
+    glue,
+    googledrive,
+    googlesheets4,
+    httr,
+    jsonlite,
+    keyringr,
+    openxlsx,
+    usethis,
+    plyr
+Remotes:
+    USAID-OHA-SI/glamr
+
