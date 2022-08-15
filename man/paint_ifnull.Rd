@@ -9,7 +9,9 @@ paint_ifnull(obj, true_paint = crayon::red, false_paint = crayon::blue)
 \arguments{
 \item{obj}{text to be painted and printed}
 
-\item{true_paint}{crayon function to execute if ~is.na(txt)}
+\item{true_paint}{crayon function to execute if is.null(obj)}
+
+\item{false_paint}{crayon function to execute if !is.null(ojb)}
 }
 \description{
 Paint if null
