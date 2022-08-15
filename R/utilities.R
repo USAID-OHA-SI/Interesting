@@ -1,7 +1,7 @@
 #' Setup processing folders
 #'
-#' @param folder
-#' @param dt
+#' @param folder Folder path, default to `cirg-submissions`
+#' @param dt     Processing Dates
 #'
 #' @export
 #'
@@ -71,8 +71,8 @@ cir_setup <- function(folder = "cirg-submissions", dt = NULL) {
 
 #' Get processing folder path
 #'
-#' @param type
-#' @param dt
+#' @param type Folder type
+#' @param dt   porcessing date
 #'
 #' @export
 #'
@@ -364,6 +364,7 @@ paint_yellow <- function(txt) {
 #'
 #' @param txt text to be painted and printed
 #' @param true_paint crayon function to execute if ~is.na(txt)
+#' @param false_patin crayon function to execute
 #' @export
 #'
 paint_ifna <- function(txt,
@@ -376,7 +377,8 @@ paint_ifna <- function(txt,
 #' Paint if null
 #'
 #' @param obj text to be painted and printed
-#' @param true_paint crayon function to execute if ~is.na(txt)
+#' @param true_paint crayon function to execute if is.null(obj)
+#' @param false_paint crayon function to execute if !is.null(ojb)
 #' @export
 #'
 paint_ifnull <- function(obj,
@@ -389,7 +391,8 @@ paint_ifnull <- function(obj,
 #' Paint if true
 #'
 #' @param value text to be painted and printed
-#' @param true_paint crayon function to execute if ~is.na(txt)
+#' @param true_paint crayon function to execute
+#' @param false_paint crayon function to execute
 #' @export
 #'
 paint_iftrue <- function(value,
