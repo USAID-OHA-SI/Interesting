@@ -72,7 +72,7 @@ validate_import <- function(df, template){
 
   #PRINT VALIDATION
   if (interactive()) {
-    cat("\n---- IMPORT VALIDATIONS ----"
+    cat("\n---- IMPORT VALIDATIONS ----",
         "\nAre there any missing columns on import?", paint_yellow(vimp$cols_missing),
         "\nAre there any extra columns on import?", paint_yellow(vimp$cols_extra),
         "\nIs sheet empty?", paint_iftrue(!vimp$has_data),
