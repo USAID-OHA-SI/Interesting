@@ -1,19 +1,26 @@
+# Libraries
 
-library(tidyverse)
-library(glamr)
-library(googledrive)
-library(googlesheets4)
-library(Interesting)
+  library(tidyverse)
+  library(glamr)
+  library(Interesting)
+  library(googledrive)
+  library(googlesheets4)
+
 
 # SETUP
 
+  # Processing folder
   proc_folder <- "cirg-submissions"
+
+  # Processing Date
   #proc_date <- glamr::curr_date()
-  proc_date <- "2022-08-05"
+  proc_date <- "2022-08-15"
 
-  cir_setup(folder = proc_folder, dt = proc_date)
+  #cir_setup(folder = proc_folder, dt = proc_date)
+  cir_setup(folder = proc_folder, dt = "2022-08-16")
 
-# GOOGLE DRIVE
+
+# GOOGLE DRIVE - TODO Function to pull latest/resubmisions
 
   cir_subm_sheet <- "1amabNYu1HF9rZ1Y-Hy5p8lQ73Ynll744HZxPyZuVEgI"
 
@@ -21,10 +28,8 @@ library(Interesting)
 
   googledrive::drive_get(cir_subm_id)
 
-  googlesheets4::gs4_browse(cir_subm_id)
-
+  #googlesheets4::gs4_browse(cir_subm_id)
   googledrive::drive_browse(cir_subm_id)
-  googledrive::drive_get(cir_subm_id)
 
   df_cir_subm <- googlesheets4::read_sheet(cir_subm_id)
 
@@ -82,22 +87,25 @@ library(Interesting)
   subm
 
   # Metadata
-  subm %>%
-    dplyr::first() %>%
-    cir_extract_meta()
-
-  subm %>%
-    dplyr::first() %>%
-    check_meta()
-
-  subm %>%
-    dplyr::first() %>%
-    check_tabs()
+  # subm %>%
+  #   dplyr::first() %>%
+  #   cir_extract_meta()
+  #
+  # subm %>%
+  #   dplyr::first() %>%
+  #   check_meta()
+  #
+  # subm %>%
+  #   dplyr::first() %>%
+  #   check_tabs()
 
   # Initial Validation
   meta <- subm %>%
     dplyr::first() %>%
     validate_initial()
+
+  metas <- subm %>%
+    map_dfr(validate_initial)
 
   # Import & 2nd round of Validation
   df_subm <- subm %>%
@@ -107,8 +115,22 @@ library(Interesting)
   df_subm$checks
   df_subm$data
 
-  # Gather
-  df_cirg <- df_subm$data %>% cir_gather()
+  # Import all
+  df_imp_checks <- metas %>%
+    filter(subm_valid == TRUE) %>%
+    select(filename, type) %>%
+    pmap_dfr(function(filename, type) {
+      subm <- cir_import(filepath = file.path(dir_raw, filename), template = type)
+      return(subm$checks)
+    })
+
+  df_imp_data <- metas %>%
+    filter(subm_valid == TRUE) %>%
+    select(filename, type) %>%
+    pmap_dfr(function(filename, type) {
+      subm <- cir_import(filepath = file.path(dir_raw, filename), template = type)
+      return(subm$data)
+    })
 
   # Import, Validations & Transformations
   df_subm <- subm %>%

@@ -64,7 +64,7 @@ cir_setup <- function(folder = "cirg-submissions", dt = NULL) {
 
   # archived
   dir_curr_proc %>%
-    base::file.path("7-archive") %>%
+    base::file.path("8-archive") %>%
     base::dir.create()
 }
 
