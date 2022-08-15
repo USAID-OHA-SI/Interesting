@@ -1,15 +1,20 @@
+# Libraries
 
-library(tidyverse)
-library(glamr)
-library(googledrive)
-library(googlesheets4)
-library(Interesting)
+  library(tidyverse)
+  library(glamr)
+  library(Interesting)
+  library(googledrive)
+  library(googlesheets4)
+
 
 # SETUP
 
+  # Processing folder
   proc_folder <- "cirg-submissions"
-  #proc_date <- glamr::curr_date()
-  proc_date <- "2022-08-05"
+
+  # Processing Date
+  proc_date <- glamr::curr_date()
+  #proc_date <- "2022-08-05"
 
   cir_setup(folder = proc_folder, dt = proc_date)
 
@@ -21,10 +26,8 @@ library(Interesting)
 
   googledrive::drive_get(cir_subm_id)
 
-  googlesheets4::gs4_browse(cir_subm_id)
-
+  #googlesheets4::gs4_browse(cir_subm_id)
   googledrive::drive_browse(cir_subm_id)
-  googledrive::drive_get(cir_subm_id)
 
   df_cir_subm <- googlesheets4::read_sheet(cir_subm_id)
 
