@@ -17,7 +17,6 @@ cir_processing <- function(filepath) {
   # Initial validation checks
   vinit <- validate_initial(filepath)
 
-<<<<<<< HEAD
   # Save metadata output to file
   cir_output(.df_out = vinit,
              .subm = filepath,
@@ -25,21 +24,15 @@ cir_processing <- function(filepath) {
              type = "metadata")
 
   # Notification
-=======
->>>>>>> feature/process-flow
   if (interactive()) {
     cat("\n---- STATUS ----",
         "\nIs submission valid? ", paint_iftrue(vinit$subm_valid),
         "\n")
   }
 
-<<<<<<< HEAD
   # STOP HERE IS SUBMISSION IS NOT VALID
-  if (!vinit$subm_valid) return(vinit)
-=======
   if (!vinit$subm_valid)
     return(vinit$subm_valid)
->>>>>>> feature/process-flow
 
   #store meta df - come back to google ID
   # TODO - There are inconsistencies in the output. See `cir_extract_meta`
@@ -51,7 +44,6 @@ cir_processing <- function(filepath) {
   # TODO - Pass valid cirg sheets to cir_import. No need to use `excel_sheets()`
   df_cirg <- cir_import(filepath, template = vinit$type)
 
-<<<<<<< HEAD
   # TODO - Store sheet level validations
 
   df_vimp <- df_cirg$checks
@@ -68,21 +60,17 @@ cir_processing <- function(filepath) {
              .name = "processed",
              type = "processed")
 
-=======
   # TODO - Store sheet level validation
   df_vimp <- df_cirg$checks
 
->>>>>>> feature/process-flow
   #validation checks - VMMC does not work on this one because of the names issue - come back to that!
   # TODO - This validation needs to be done at the tab level given the differences in wide templates
   # ACTION - Do the validation within the import
   # ACTION - Do the validation against the specified template type
   # ACTION - What's the fall back for when data structure does meet the template?
-<<<<<<< HEAD
+
   #vimp <- validate_import(df_data)
-=======
-  #vimp <- validate_import(df_cirg)
->>>>>>> feature/process-flow
+
 
   #remove any extra columns
   # TODO - Same as above. This needs to be moved in `cir_import()`
@@ -97,16 +85,12 @@ cir_processing <- function(filepath) {
   #Munge string
   df_cirg <- cir_munge_string(df_cirg)
 
-<<<<<<< HEAD
   # Save transformed data output to file
   cir_output(.df_out = df_cirg,
              .subm = filepath,
              .name = "transformed",
              type = "transformed")
 
-
-=======
->>>>>>> feature/process-flow
   # NOTE - See notes in meta_df section
   #df_cirg <- cir_join_meta(df_cirg, df_meta = meta_df)
   df_cirg <- df_cirg %>%
@@ -116,7 +100,6 @@ cir_processing <- function(filepath) {
   # TODO - Return data along with output validations list(checks = vout, data = df_cirg)
   df_cirg <- validate_output(df_cirg)
 
-<<<<<<< HEAD
   #df_vout <- df_cirg$checks
 
   # Save transformed data output to file
@@ -129,14 +112,12 @@ cir_processing <- function(filepath) {
   # cir_archive(filepath)
 
   return(vinit)
-=======
+
   # Save outputs
   # TODO - Save processing logs & data: vinit, vimp, vout and df_cirg
   #
 
-
   return(df_cirg)
->>>>>>> feature/process-flow
 }
 
 

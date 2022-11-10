@@ -8,7 +8,7 @@
 
 validate_output <- function(df, output_path, content=FALSE, datim_path=NULL){
 
-<<<<<<< HEAD
+
   if (interactive()) {
     cat("\n---- OUTPUT VALIDATIONS ----",
         "\n---- Missing Values ----")
@@ -26,15 +26,6 @@ validate_output <- function(df, output_path, content=FALSE, datim_path=NULL){
 
   check_content(df)
 
-=======
-  check_output_cols(df) # Looks like a repetition
-  check_orgunituids(df)
-  check_mechs(df)
-  check_content(df)
-  #check_inds(df)
-  #check_disaggs(df)
-
->>>>>>> feature/process-flow
   # #optional check
   # if (content & !is.null(datim_path)) {
   #   df <- check_content(df, output_path, datim_path)
@@ -89,11 +80,7 @@ check_orgunituids <-function(df){
 
 #' Validate mechanisms for export
 #'
-<<<<<<< HEAD
 #' @param df HFR data framed created by `cir_process_template()`
-=======
-#' @param df HFR data framed created by ``cir_process_template()``
->>>>>>> feature/process-flow
 
 check_mechs <-function(df){
 
@@ -188,11 +175,7 @@ check_content <- function(df, output_path, datim_path) {
     dplyr::distinct(operatingunit) %>%
     dplyr::pull()
 
-<<<<<<< HEAD
-  uid <- grabr::get_ouuid(cntry)
-=======
   uid <- glamr::get_ouuid(cntry)
->>>>>>> feature/process-flow
 
   df_orgs <- Wavelength::pull_hierarchy(uid, username = glamr::datim_user(), password = glamr::datim_pwd())
   df_mechs <- Wavelength::pull_mech(usaid_only = TRUE, ou_sel = cntry, folderpath_output = NULL)

@@ -1,20 +1,11 @@
 #' Setup processing folders
 #'
-<<<<<<< HEAD
-#' @param folder Folder path, default to `cirg-submissions`
-#' @param dt     Processing Dates
-#'
-#' @export
-#'
-cir_setup <- function(folder = "cirg-submissions", dt = NULL) {
-=======
 #' @param folder
 #' @param dt
 #'
 #' @export
 #'
 cir_setup <- function(folder = "ou_submissions", dt = NULL) {
->>>>>>> feature/process-flow
 
   # Date
   curr_dt <- ifelse(is.null(dt),
@@ -33,24 +24,17 @@ cir_setup <- function(folder = "ou_submissions", dt = NULL) {
 
   # Raw Data
   dir_curr_proc %>%
-<<<<<<< HEAD
     base::file.path("0-reference") %>%
     base::dir.create()
 
   # Raw Data
   dir_curr_proc %>%
-=======
->>>>>>> feature/process-flow
     base::file.path("1-raw") %>%
     base::dir.create()
 
   # Metadata - 1 file per submission
   dir_curr_proc %>%
-<<<<<<< HEAD
     base::file.path("2-metadata") %>%
-=======
-    base::file.path("2-meta") %>%
->>>>>>> feature/process-flow
     base::dir.create()
 
   # Validations - 3 files per submission
@@ -63,7 +47,6 @@ cir_setup <- function(folder = "ou_submissions", dt = NULL) {
     base::file.path("4-processed") %>%
     base::dir.create()
 
-<<<<<<< HEAD
   # transformation sheets data
   dir_curr_proc %>%
     base::file.path("5-transformed") %>%
@@ -72,38 +55,24 @@ cir_setup <- function(folder = "ou_submissions", dt = NULL) {
   # cleaned data
   dir_curr_proc %>%
     base::file.path("6-cleaned") %>%
-=======
-  # cleaned data
-  dir_curr_proc %>%
-    base::file.path("5-cleaned") %>%
->>>>>>> feature/process-flow
     base::dir.create()
 
   # final data
   dir_curr_proc %>%
-<<<<<<< HEAD
     base::file.path("7-final") %>%
     base::dir.create()
 
   # archived
   dir_curr_proc %>%
     base::file.path("8-archive") %>%
-=======
-    base::file.path("6-final") %>%
->>>>>>> feature/process-flow
     base::dir.create()
 }
 
 
 #' Get processing folder path
 #'
-<<<<<<< HEAD
 #' @param type Folder type
 #' @param dt   porcessing date
-=======
-#' @param type
-#' @param dt
->>>>>>> feature/process-flow
 #'
 #' @export
 #'
@@ -114,7 +83,6 @@ cir_folder <- function(type = "raw", dt = NULL) {
                     dt)
 
   # Processing folder
-<<<<<<< HEAD
   folder <- base::file.path(paste0("./cirg-submissions/CIRG-", curr_dt)) %>%
     fs::dir_ls(regexp = paste0(type, "$"), recurse = TRUE)
 
@@ -190,13 +158,6 @@ cir_archive <- function(.subm) {
                 new_path = file.path(dir_arch, basename(filepath)))
 }
 
-=======
-  base::file.path(paste0("./ou_submissions/CIRG-", curr_dt)) %>%
-    fs::dir_ls(regexp = paste0(type, "$"), recurse = TRUE)
-}
-
-
->>>>>>> feature/process-flow
 #' Extract Meta Data Information about Template
 #'
 #' @description Useful for pulling information about the template, whether
@@ -403,10 +364,7 @@ paint_yellow <- function(txt) {
 #'
 #' @param txt text to be painted and printed
 #' @param true_paint crayon function to execute if ~is.na(txt)
-<<<<<<< HEAD
 #' @param false_patin crayon function to execute
-=======
->>>>>>> feature/process-flow
 #' @export
 #'
 paint_ifna <- function(txt,
@@ -419,12 +377,8 @@ paint_ifna <- function(txt,
 #' Paint if null
 #'
 #' @param obj text to be painted and printed
-<<<<<<< HEAD
 #' @param true_paint crayon function to execute if is.null(obj)
 #' @param false_paint crayon function to execute if !is.null(ojb)
-=======
-#' @param true_paint crayon function to execute if ~is.na(txt)
->>>>>>> feature/process-flow
 #' @export
 #'
 paint_ifnull <- function(obj,
@@ -437,12 +391,8 @@ paint_ifnull <- function(obj,
 #' Paint if true
 #'
 #' @param value text to be painted and printed
-<<<<<<< HEAD
 #' @param true_paint crayon function to execute
 #' @param false_paint crayon function to execute
-=======
-#' @param true_paint crayon function to execute if ~is.na(txt)
->>>>>>> feature/process-flow
 #' @export
 #'
 paint_iftrue <- function(value,

@@ -136,13 +136,8 @@ check_meta <- function(filepath){
 
     cat("\n--- METADATA ----",
         "\nFilename:", crayon::blue(meta$filename),
-<<<<<<< HEAD
         "\nHas meta sheet?", paint_iftrue(meta$has_meta),
         "\nHas valid metadata?", paint_iftrue(meta$has_valid_meta),
-=======
-        "\nHas meta sheet", paint_iftrue(meta$has_meta),
-        "\nHas valid metadata", paint_iftrue(meta$has_valid_meta),
->>>>>>> feature/process-flow
         "\nOU/Country:", paint_ifna(meta$ou),
         "\nWhat template was submitted?", crayon::blue(paste(meta$type, meta$version)),
         "\nWhat reporting period?", paint_ifna(meta$period),
@@ -182,21 +177,13 @@ check_tabs <- function(filepath){
     has_cirg_sheets = has_cirg,
     sheets_count = length(tabs),
     sheets_valid = tabs_imported,
-<<<<<<< HEAD
     sheets_exclude = ifelse(length(tabs_excluded) > 0, tabs_excluded, "None")
-=======
-    sheets_exclude = tabs_excluded
->>>>>>> feature/process-flow
   )
 
   #PRINT and/or LOG VALIDATION
 
   if (interactive()) {
-<<<<<<< HEAD
     cat("\n---- DATA SHEETS ----",
-=======
-    cat("\n---- DATA ----",
->>>>>>> feature/process-flow
         "\nHas CIRG Sheets? ", paint_iftrue(cirg$has_cirg_sheets),
         "\nNumber of sheets: ", cirg$sheets_count,
         "\nAll sheets [valid sheet must be labeled 'CIRG']: ", paint_blue(paste(tabs, collapse = ", ")),
