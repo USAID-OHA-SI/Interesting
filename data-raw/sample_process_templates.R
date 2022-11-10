@@ -16,9 +16,7 @@
   #proc_date <- glamr::curr_date()
   proc_date <- "2022-08-15"
 
-  #cir_setup(folder = proc_folder, dt = proc_date)
-  cir_setup(folder = proc_folder, dt = "2022-08-16")
-
+  cir_setup(folder = proc_folder, dt = proc_date)
 
 # GOOGLE DRIVE - TODO Function to pull latest/resubmisions
 
@@ -38,7 +36,7 @@
 # CIR Submissions
 
   df_cir_subm <- df_cir_subm %>%
-    janitor::clean_names() %>%
+    janitor::clean_names() %>% #glimpse()
     select(subm_time = timestamp,
            subm_poc = email_address,
            subm_ou = operating_unit_country,
@@ -47,18 +45,28 @@
            subm_tmp_type = which_template_s_are_you_submitting,
            subm_tech_areas = what_technical_area_s_are_you_submitting_data_for,
            subm_files = upload_your_custom_indicator_template_file_s_here_excel_sheets_only_no_google_sheets,
-           subm_processed = processed_by_cirg) %>%
+           subm_processed = processed_by_cirg,
+           subm_rejected = file_s_rejected_or_accepted,
+           subm_frozen = frozen_for_processing_yes_no,
+           subm_notes = cirg_notes,
+           subm_feedb_sent = feedback_sent_back_to_mission_c_cs) %>%
     rowwise() %>%
-    mutate(subm_count = length(unlist(str_split(subm_files, ", "))),
+    mutate(subm_files_count = length(unlist(str_split(subm_files, ", "))),
            subm_id = as.numeric(lubridate::as_datetime(subm_time, tz = "EST"))) %>%
     ungroup() %>%
     relocate(subm_id, .before = 1) %>%
-    relocate(subm_processed, .after = last_col())
+    relocate(subm_files_count, .after = last_col())
+
+  df_cir_subm %>%
+    count(subm_id) %>%
+    filter(n > 1)
 
 # CIR Submission files
 
+  df_cir_subm %>% distinct(subm_period)
+
   df_cir_files <- df_cir_subm %>%
-    filter(subm_period == "FY22 Q2") %>%
+    filter(subm_period == "FY22 Q4") %>%
     select(subm_id, subm_file = subm_files) %>%
     separate_rows(subm_file, sep = ",\\s") %>%
     mutate(subm_file_id = str_extract(subm_file, "(?<=\\?id\\=).*"),
@@ -81,34 +89,34 @@
 
 # LOCAL FILES
 
-  #subm <- fs::dir_ls("~/Downloads", regexp = "CIRG_.*.xlsx$")
-  subm <- fs::dir_ls(dir_raw, regexp = "CIRG_.*.xlsx$")
+  #subms <- fs::dir_ls("~/Downloads", regexp = "CIRG_.*.xlsx$")
+  subms <- fs::dir_ls(dir_raw, regexp = "CIRG_.*.xlsx$")
 
-  subm
+  subms
 
   # Metadata
-  # subm %>%
+  # subms %>%
   #   dplyr::first() %>%
   #   cir_extract_meta()
   #
-  # subm %>%
+  # subms %>%
   #   dplyr::first() %>%
   #   check_meta()
   #
-  # subm %>%
+  # subms %>%
   #   dplyr::first() %>%
   #   check_tabs()
 
   # Initial Validation
-  meta <- subm %>%
+  meta <- subms %>%
     dplyr::first() %>%
     validate_initial()
 
-  metas <- subm %>%
+  metas <- subms %>%
     map_dfr(validate_initial)
 
   # Import & 2nd round of Validation
-  df_subm <- subm %>%
+  df_subm <- subms %>%
     dplyr::first() %>%
     cir_import(template = meta$type)
 

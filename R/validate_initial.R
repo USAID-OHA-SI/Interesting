@@ -177,7 +177,7 @@ check_tabs <- function(filepath){
     has_cirg_sheets = has_cirg,
     sheets_count = length(tabs),
     sheets_valid = tabs_imported,
-    sheets_exclude = tabs_excluded
+    sheets_exclude = ifelse(length(tabs_excluded) > 0, tabs_excluded, "None")
   )
 
   #PRINT and/or LOG VALIDATION
