@@ -40,8 +40,6 @@ vignettes/*.pdf
 # R Environment Variables
 .Renviron
 
-<<<<<<< HEAD
-=======
 #no data
 *.csv
 *.txt
@@ -53,7 +51,6 @@ vignettes/*.pdf
 *.twbx
 *.pptx
 *.hyper
->>>>>>> feature/process-flow
 
 #nothing from these folders
 AI/*
@@ -63,16 +60,12 @@ Images/*
 Graphics/*
 Documents/*
 
-<<<<<<< HEAD
 data-raw/validations/*
 cirg-submissions/*
-tableau/*
-=======
-cirg-submissions/
 ou_submissions/
 out/
 in/
 tableau/
->>>>>>> feature/process-flow
+
 
 
