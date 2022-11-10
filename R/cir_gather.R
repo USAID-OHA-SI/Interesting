@@ -28,8 +28,12 @@ cir_gather <- function(df){
     }
 
     #reorganize
+<<<<<<< HEAD
     df <- df %>%
       dplyr::select(
+=======
+    df <- df %>% dplyr::select(
+>>>>>>> feature/process-flow
         reportingperiod:psnu, indicator,sex, age,
         population, otherdisaggregate, numdenom, val) %>%
       mutate(temp_type = ifelse(endsWith(indicator, "....."),
