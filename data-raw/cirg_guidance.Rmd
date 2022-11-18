@@ -1,0 +1,169 @@
+---
+title: "CIRG Guidance"
+author: "Baboyma Kagniniwa"
+date: "11/14/2022"
+output: 
+  md_document:
+    variant: markdown
+always_allow_html: true
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, knitr.kable.NA = '')
+```
+
+```{r libraries, echo=F, warning=F, message=F}
+library(tidyverse)
+```
+## Purpose of Custom Data Collection
+
+The main goal of Custom Indicator Reporting (CIG) is to suppliment existing data,PEPFAR MER (Monitoring, Evaluation and Reporting) and HFR (High Frequency Reporting), with additional custom indicators designed to fully and effectively monitor and manage programs across all program areas and to improve efforts towards continuous program improvement.
+
+## Data Collection Process
+
+### List of Indicators
+
+A set of 28 custom indicators is requested for central collection and is organized by technical area. As with the MER indicators, most indicators are requested on a quarterly basis, with OVC indicators requested semi-annually. The list of indicators is included below, and full details for each indicator, including disaggregates and how to collect and use the data, can be found in the USAID PEPFAR Central Custom Indicators Reference Guide. 
+
+Country teams should only submit indicators that are relevant to their existing PEPFAR program. For example, if PrEP activities are not supported by USAID in-country, the mission is not expected to report on the 5 PrEP indicators listed below. As this process evolves through initial implementation, feedback, and review, the list of indicators may be amended for future data collection cycles (reducing and/or adding key custom indicators or technical areas).
+
+#### Quarterly Indicators
+
+```{r table1, echo=F, message=F, warning=F, results='asis'}
+
+tbl_qtr_title <- "Quarterly (Q1, Q2, Q3 & Q4)"
+
+tbl_qtr <- tibble::tribble(
+  ~`Technical Area`,                                            ~Indicator,
+           "DREAMS",                                           "DREAMS_FP",
+           "GENDER",                                            "GEND_GBV",
+                 NA,                                      "GEND_GBV_OTHER",
+                 NA,                                      "GEND_LINK_COMM",
+                 NA,                                           "GEND_NORM",
+               "KP",                                       "TX_NEW_VERIFY",
+                 NA,                                      "TX_CURR_VERIFY",
+                 NA,                                      "TX_PVLS_VERIFY",
+                 NA,                                       "TX_RTT_VERIFY",
+              "LAB",                                    "TX_PVLS_ELIGIBLE",
+                 NA,                                      "TX_PVLS_SAMPLE",
+                 NA,                             "TX_PVLS_RESULT_RETURNED",
+                 NA,        "PMTCT_EID_ELIGIBLE PMTCT_EID_RESULT_RETURNED",
+             "PrEP",                                          "PrEP_OFFER",
+                 NA,                                         "PrEP_1MONTH",
+                 NA,                                     "PrEP_NEW_VERIFY",
+                 NA,                                      "PrEP_CT_VERIFY",
+     "SUPPLY CHAIN",                                          "SC_ARVDISP",
+                 NA,                                             "SC_LMIS",
+                 NA,                                             "SC_CURR",
+             "VMMC",                                             "VMMC_AE",
+            "OTHER",                                         "TX_CURR_DART"
+)
+
+```
+
+```{r echo=F}
+options(knitr.kable.NA = '')
+
+kableExtra::kbl(x = tbl_qtr, 
+                format = "html",
+                #,caption = tbl_qtr_title
+                ) %>% 
+  kableExtra::kable_styling(bootstrap_options = "striped",
+                            full_width = F,
+                            position = "left")
+```
+
+#### Semi-Annual Indicators
+
+```{r table2, echo=F, message=F, warning=F, results='asis'}
+
+tbl_semi_title <- "Semi-Annual (Q2 & Q4)"
+  
+tbl_semi <- tibble::tribble(
+  ~`Technical Area`,                          ~Indicator,                           
+              "OVC",                         "OVC_OFFER",
+                 NA,  "OVC_ENROLL OVC_VL_ELIGIBLE (<18)",
+                 NA,                     "OVC_VLR (<18)",
+                 NA,                      "OVC_VLS (<18)"
+  )
+
+```
+
+```{r echo=F}
+options(knitr.kable.NA = '')
+
+kableExtra::kbl(x = tbl_semi, 
+                format = "html") %>% 
+  kableExtra::kable_styling(bootstrap_options = "striped",
+                            full_width = F,
+                            position = "left")
+```
+
+#### Data Submission Templates
+
+All central custom data should be collected through the Excel-based template. The template is structured similarly to the HFR template, with three format options for submission (long , wide, semi-wide). Country teams can combine IP data into one template, or keep submissions from different partners and/or technical areas separate.
+
+
+## Data Submission Process
+
+### Timeline & Reporting Frequency
+
+The following table designates the reporting cycle for Custom Indicator Reporting. Each CIRG reporting period is a full fiscal quarter. Data submissions are due in alignment with the PEPFAR Data Calendar MER Initial Data Entry and Clean Data entry submission deadlines for DATIM. Submissions will be sent by the prime partner to the USAID country teams who will compile and submit through the Central Custom Indicator Submission Form. Late and re-submissions will be accepted on a rolling basis, however, only data submitted by the late and re-submission deadlines will be included in the CIRG dataset used for tools and products in that respective quarter. Data submitted after the late/re-submission deadline will be included in the next quarter’s dataset.
+
+#### Reporting Calender
+
+```{r echo=F}
+
+cir_cal_title <- "FY23 Reporting Calender"
+
+cir_calendar <- tibble::tribble(
+  ~`Reporting Period`,   ~`Submission Type`,         ~`Due Dates`,
+  "FY23 Q1",                      "Initial",  "February 10, 2023",
+         NA,          "Late/Re-submission*",     "March 17, 2023",
+         NA,                             NA,                   NA,
+  "FY23 Q2",                      "Initial",       "May 12, 2023",
+         NA,          "Late/Re-submission*",      "June 16, 2023",
+         NA,                             NA,                   NA,
+  "FY23 Q3",                      "Initial",    "August 11, 2023",
+         NA,          "Late/Re-submission*", "September 15, 2023",
+         NA,                             NA,                   NA,
+  "FY23 Q4",                      "Initial",  "November 10, 2023",
+         NA,          "Late/Re-submission*",  "December 15, 2023"
+  )
+```
+
+```{r echo=F}
+options(knitr.kable.NA = '')
+
+kableExtra::kbl(x = cir_calendar, 
+                format = "html"
+                #,caption = cir_cal_title
+                ) %>% 
+  kableExtra::kable_styling(bootstrap_options = "striped",
+                            full_width = F,
+                            position = "left") %>% 
+  kableExtra::footnote(general = "*Late/Re-submissions can be submitted at any time.")
+```
+
+#### Data Submission Format
+
+On or before the data submission date each quarter, Mission teams should submit completed data template(s) as attachment(s) to the Custom Data Submission Google Form.
+
+Template files should be named using the following format and should include partner and/or technical area if multiple templates are used.
+
+**CIRG_FY[YY]_[Period]_[OU]_[PARTNER]_[DATE SUBMITTED as YYYYMMDD]**
+
+Eg: `CIRG_FY21_Q1_Moldova_20211015.xlsx or CIRG_FY21_Q1_Moldova_IP4data.20211015.xlsx`
+
+
+#### Common Reporting Errors
+
+Drag and drop errors for reporting periods, mechanism IDs, and orgunit UIDs resulting in consecutive numbers (e.g.- 11111, 11112, 11113). Any IDs/UIDs that do not align with IDs/UIDs referenced in DATIM will be excluded and flagged in the error report.
+Including multiple reporting periods in one file. This makes it difficult to remove data intended to be replaced by resubmitted data.
+
+Sending only the corrected rows instead of sending the entire original file with the corrected rows. When re-submitting data, it is best to resubmit the entire file with the corrected data to help us determine which old data to exclude.
+
+#### Non Custom Indicators 
+
+Country teams and partners may routinely collect additional custom indicators that are not included in this Central Custom Indicator list. This list should not preclude Country teams from collecting these indicators independently. While Country teams and partners can submit additional data for non-custom indicators using the long template, this data will not be included in the final dataset for custom indicators. 
+
