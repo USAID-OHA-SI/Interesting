@@ -540,7 +540,6 @@ library(glue)
       })
     })
 
-
   }
 
 # Run application
