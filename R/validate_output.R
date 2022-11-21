@@ -175,7 +175,7 @@ check_content <- function(df, output_path, datim_path) {
     dplyr::distinct(operatingunit) %>%
     dplyr::pull()
 
-  uid <- glamr::get_ouuid(cntry)
+  uid <- grabr::get_ouuid(cntry)
 
   df_orgs <- Wavelength::pull_hierarchy(uid, username = glamr::datim_user(), password = glamr::datim_pwd())
   df_mechs <- Wavelength::pull_mech(usaid_only = TRUE, ou_sel = cntry, folderpath_output = NULL)
@@ -224,8 +224,6 @@ check_content <- function(df, output_path, datim_path) {
 
   # Check the rest of the data
   cat("\nChecking the entire dataset ...")
-
-
 
   df <- df %>%
     is_ou_valid(df_orgs = df_orgs) %>%

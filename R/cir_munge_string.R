@@ -7,6 +7,7 @@
 
 cir_munge_string <- function(df){
 
+  glimpse(df)
 
   df <- df %>%
     rename(ageasentered = age,
@@ -40,8 +41,6 @@ cir_munge_string <- function(df){
            val = as.numeric(val)) %>%
     filter(!is.na(val) & !is.na(indicator))
    # left_join(meta_df, by = c("operatingunit" = "ou_meta", "reportingperiod" = "period_meta")
-
-
 
   return(df)
 }

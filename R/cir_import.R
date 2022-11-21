@@ -57,7 +57,8 @@ cir_import <- function(filepath, template = NULL){
         logger::log_info("\nSkipping import validations ...")
 
         df_tab <- df_tab %>%
-          dplyr::mutate(temp_type = NA_character_,
+          dplyr::mutate(filename = basename(filepath),
+                        #temp_type = NA_character_,
                         sheet = .x,
                         row_id = dplyr::row_number() + 2)
 
@@ -72,12 +73,13 @@ cir_import <- function(filepath, template = NULL){
 
       checks <<- dplyr::bind_rows(checks, vimp$checks)
 
+      # Making sure records can be traced back to submissions
       vimp$data <- vimp$data %>%
-        dplyr::mutate(temp_type = template,
+        dplyr::mutate(filename = basename(filepath),
+                      #temp_type = template,
                       sheet = .x,
                       row_id = dplyr::row_number() + 2)
 
-      #return(df_tab)
       return(vimp$data)
     })
 

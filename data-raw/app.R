@@ -390,12 +390,12 @@ library(glue)
 
       df_imports_data <- df_imports %>%
         map_dfr(function(.imp){
-          .imp$data
-          # %>%
-          #   left_join(df_ref, by = c("filename" = "datapath")) %>%
-          #   select(-filename) %>%
-          #   select(filename = name, everything())
-        })
+          .imp$data %>%
+            left_join(df_ref, by = c("filename" = "datapath")) %>%
+            select(-filename) %>%
+            select(filename = name, everything())
+        }) %>%
+        relocate(sheet, row_id, .after = filename)
 
       if (nrow(df_imports_data > 0)) {
         # Update header - Data
@@ -413,7 +413,7 @@ library(glue)
       #print(df_imports)
       # glimpse(df_imports[[1]]$checks)
       # glimpse(df_imports[[1]]$data)
-      print(length(df_imports))
+      #print(length(df_imports))
 
       output$submFilesList <- DT::renderDataTable({
         DT::datatable(
@@ -443,6 +443,104 @@ library(glue)
         )
       })
     })
+
+    # Transform Submissions
+
+    df_transformed <- NULL
+
+    observeEvent(input$transformSubm, {
+
+      if (is.null(df_imports)) {
+        output$submNotification <- renderUI({
+          HTML(as.character(p("ERROR - Make sure submission data have been imported before proceeding with the transformation",
+                              style = "color:red")))
+        })
+        return(NULL)
+      }
+
+      output$submNotification <- renderUI({
+        HTML(as.character(p("")))
+      })
+
+      df_transformed <<- df_imports %>%
+        map_dfr(function(.imp){
+          .imp$data %>%
+            left_join(subm_files[,c("name", "datapath")],
+                      by = c("filename" = "datapath")) %>%
+            select(-filename) %>%
+            select(filename = name, everything())
+        }) %>%
+        cir_gather() %>%
+        cir_munge_string()
+
+      output$submFilesData <- DT::renderDataTable({
+        DT::datatable(
+          df_transformed,
+          colnames = str_to_upper(str_replace_all(names(df_imports_data), "_", " ")),
+          filter = "top",
+          height = "300px",
+          options = list(
+            dom = "tlpi",
+            scrollX = TRUE,
+            scrollY = "300px"
+          )
+        )
+      })
+    })
+
+    # Validate Submissions' Content
+
+    df_validated <- NULL
+
+    observeEvent(input$validateSubm, {
+
+      if (is.null(df_transformed)) {
+        output$submNotification <- renderUI({
+          HTML(as.character(p("ERROR - Make sure submission data have been transformed before proceeding with the content validation.",
+                              style = "color:red")))
+        })
+        return(NULL)
+      }
+
+      output$submNotification <- renderUI({
+        HTML(as.character(p("")))
+      })
+
+      df_validated <<- df_transformed %>%
+        validate_output()
+
+      # Validation Errors
+      output$submFilesList <- DT::renderDataTable({
+        DT::datatable(
+          df_validated$checks,
+          colnames = str_to_upper(str_replace_all(names(df_validated$checks), "_", " ")),
+          filter = "top",
+          height = "300px",
+          options = list(
+            dom = "tlpi",
+            scrollX = TRUE,
+            scrollY = "300px"
+          )
+        )
+      })
+
+      # Validated Data
+      output$submFilesData <- DT::renderDataTable({
+        DT::datatable(
+          df_validated$data,
+          colnames = str_to_upper(str_replace_all(names(df_imports_data), "_", " ")),
+          filter = "top",
+          height = "300px",
+          options = list(
+            dom = "tlpi",
+            scrollX = TRUE,
+            scrollY = "300px"
+          )
+        )
+      })
+    })
+
+
   }
 
 # Run application
