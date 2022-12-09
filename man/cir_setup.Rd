@@ -4,12 +4,10 @@
 \alias{cir_setup}
 \title{Setup processing folders}
 \usage{
-cir_setup(folder = "cirg-submissions", dt = NULL)
+cir_setup(folder = "ou_submissions", dt = NULL)
 }
 \arguments{
-\item{folder}{Folder path, default to \code{cirg-submissions}}
-
-\item{dt}{Processing Dates}
+\item{dt}{}
 }
 \description{
 Setup processing folders

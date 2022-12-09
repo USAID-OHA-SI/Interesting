@@ -27,11 +27,9 @@
   googledrive::drive_get(cir_subm_id)
 
   #googlesheets4::gs4_browse(cir_subm_id)
-  googledrive::drive_browse(cir_subm_id)
+  #googledrive::drive_browse(cir_subm_id)
 
   df_cir_subm <- googlesheets4::read_sheet(cir_subm_id)
-
-  df_cir_subm %>% glimpse()
 
 # CIR Submissions
 
@@ -112,17 +110,8 @@
     dplyr::first() %>%
     validate_initial()
 
-  metas <- subms %>%
-    map_dfr(validate_initial)
-
-  subms %>%
-    dplyr::first() %>%
-    readxl::read_excel(.,
-                       sheet = 2,
-                       skip = 2,
-                       col_types = "text") %>%
-    #cir_template_cols(template = "Wide")
-    cir_template_ta()
+  # metas <- subms %>%
+  #   map_dfr(validate_initial)
 
   # Import & 2nd round of Validation
   df_subm <- subms %>%

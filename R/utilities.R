@@ -72,7 +72,7 @@ cir_setup <- function(folder = "ou_submissions", dt = NULL) {
 #' Get processing folder path
 #'
 #' @param type Folder type
-#' @param dt   porcessing date
+#' @param dt   processing date
 #'
 #' @export
 #'
@@ -219,11 +219,12 @@ cir_extract_meta <- function(filepath, meta_type = NULL){
 #' @param template Template name to validate against
 #'
 #' @export
+#' @return List of required column names
 #'
+#' @examples
 #' \dontrun{
 #' tmp = "Semi-wide"
-#' tmp_cols <- cir_template_cols(df, template = tmp)
-#' }
+#' tmp_cols <- cir_template_cols(df, template = tmp)}
 
 cir_template_cols <- function(df_cir, template = "long") {
 
@@ -298,7 +299,11 @@ cir_template_cols <- function(df_cir, template = "long") {
 #' @param df_cir Data frame to extract columns from
 #'
 #' @export
+#' @return Technical Area name(s)
 #'
+#' @examples
+#' \dontrun{
+#' ta <- cir_template_ta(df)}
 
 cir_template_ta <- function(df_cir) {
 
@@ -356,7 +361,6 @@ var_exists <- function(df, var, all = TRUE) {
 #'
 
 var_matches <- function(df, pattern) {
-  #var %in% names(df)
   any(stringr::str_detect(string = names(df), pattern = pattern))
 }
 
