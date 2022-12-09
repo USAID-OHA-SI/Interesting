@@ -9,13 +9,10 @@ paint_iftrue(value, true_paint = crayon::green, false_paint = crayon::red)
 \arguments{
 \item{value}{text to be painted and printed}
 
-<<<<<<< HEAD
 \item{true_paint}{crayon function to execute}
 
 \item{false_paint}{crayon function to execute}
-=======
 \item{true_paint}{crayon function to execute if ~is.na(txt)}
->>>>>>> feature/process-flow
 }
 \description{
 Paint if true

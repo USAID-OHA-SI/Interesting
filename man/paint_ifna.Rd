@@ -10,11 +10,8 @@ paint_ifna(txt, true_paint = crayon::yellow, false_paint = crayon::blue)
 \item{txt}{text to be painted and printed}
 
 \item{true_paint}{crayon function to execute if ~is.na(txt)}
-<<<<<<< HEAD
 
 \item{false_patin}{crayon function to execute}
-=======
->>>>>>> feature/process-flow
 }
 \description{
 Paint if na

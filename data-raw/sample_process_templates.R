@@ -115,6 +115,15 @@
   metas <- subms %>%
     map_dfr(validate_initial)
 
+  subms %>%
+    dplyr::first() %>%
+    readxl::read_excel(.,
+                       sheet = 2,
+                       skip = 2,
+                       col_types = "text") %>%
+    #cir_template_cols(template = "Wide")
+    cir_template_ta()
+
   # Import & 2nd round of Validation
   df_subm <- subms %>%
     dplyr::first() %>%

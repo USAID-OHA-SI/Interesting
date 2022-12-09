@@ -4,12 +4,8 @@ Version: 0.0.0.9000
 Authors@R: c(
     person("Karishma", "Srikanth", , "ksrikanth@usaid.gov", role = c("aut", "cre")),
     person("Nelly", "Maina", , "nmaina@usaid.gov", role = c("aut")),
-<<<<<<< HEAD
     person("Nashiva", "McDavid", , "nmcdavid@usaid.gov", role = c("aut")),
     person("Baboyma", "Kagniniwa", , "bkagniniwa@usaid.gov", role = c("aut")))
-=======
-    person("Nashiva", "McDavid", , "nmcdavid@usaid.gov", role = c("aut")))
->>>>>>> feature/process-flow
 Description: Processing and validation scripts for CIRG Quarterly Data
 License: MIT + file LICENSE
 Encoding: UTF-8
@@ -30,14 +26,10 @@ Imports:
     stringr,
     tibble,
     tidyr,
-<<<<<<< HEAD
     vroom,
     logger,
     tidyselect,
     fs
-=======
-    vroom
->>>>>>> feature/process-flow
 Suggests: 
     curl,
     glue,
@@ -50,9 +42,5 @@ Suggests:
     usethis,
     plyr
 Remotes:
-<<<<<<< HEAD
     USAID-OHA-SI/glamr,
     USAID-OHA-SI/Wavelength
-=======
-    USAID-OHA-SI/glamr
->>>>>>> feature/process-flow

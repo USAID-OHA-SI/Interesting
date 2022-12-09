@@ -213,18 +213,139 @@ cir_extract_meta <- function(filepath, meta_type = NULL){
 }
 
 
-#' Check if variable exist
+#' @title Validate template
+#'
+#' @param df Data frame to check against
+#' @param template Template name to validate against
+#'
+#' @export
+#'
+#' \dontrun{
+#' tmp = "Semi-wide"
+#' tmp_cols <- cir_template_cols(df, template = tmp)
+#' }
+
+cir_template_cols <- function(df_cir, template = "long") {
+
+  req_cols <- NULL
+
+  # Long
+  if(template == "Long" & var_exists(df_cir, template_cols_long)) {
+    req_cols <- template_cols_long
+  }
+
+  # Semi-wide
+  if(template == "Semi-wide" &
+      var_exists(df_cir, c(template_cols_core, template_cols_disaggs)) &
+      !var_exists(df_cir, template_cols_ind) &
+      var_exists(df_cir, setdiff(template_cols_semiwide,
+                                 c(template_cols_core, template_cols_disaggs)),
+                 all = FALSE)) {
+    req_cols <- template_cols_semiwide
+  }
+
+  # Wide
+  if(template == "Wide" &
+      var_exists(df_cir, template_cols_core) &
+      !var_exists(df_cir, template_cols_ind) &
+      var_exists(df_cir, setdiff(template_cols_wide, template_cols_core),
+                 all = FALSE)) {
+
+    ta <- cir_template_ta(df_cir)
+
+    req_cols <- ta %>%
+      stringr::str_to_lower() %>%
+      purrr::map(function(.x) {
+        template_cols_wgroups[[.x]]
+      }) %>%
+      base::unlist() %>%
+      base::unique()
+  }
+
+  # if(tmp == "Long" & var_exists(df, template_cols_long)){
+  #   req_cols <- template_cols_long
+  # } else if(tmp == "Semi-wide" &
+  #           var_exists(df, c(template_cols_core, template_cols_disaggs)) &
+  #           !var_exists(df, template_cols_ind) &
+  #           var_exists(df, setdiff(template_cols_semiwide,
+  #                                  c(template_cols_core,
+  #                                    template_cols_disaggs)),
+  #                      all = FALSE)){
+  #   req_cols <- template_cols_semiwide
+  # } else if(tmp == "Wide" & var_exists(df, template_cols_core) & var_matches(df, "dreams")){
+  #   req_cols <- template_wide_dreams
+  # } else if(tmp == "Wide" & var_exists(df, template_cols_core) & var_matches(df, "gend_gbv")){
+  #   req_cols <- template_wide_gender
+  # } else if(tmp == "Wide" & var_exists(df, template_cols_core) & var_matches(df, "^[ct]_verify")){
+  #   req_cols <- template_wide_kp
+  # } else if(tmp == "Wide" & var_exists(df, template_cols_core) & var_matches(df, "eligible|sample|result")){
+  #   req_cols <- template_wide_lab
+  # } else if(tmp == "Wide" & var_exists(df, template_cols_core) & var_matches(df, "ovc")){
+  #   req_cols <- template_wide_ovc
+  # } else if(tmp == "Wide" & var_exists(df, template_cols_core) & var_matches(df, "prep")){
+  #   req_cols <- template_wide_prep
+  # } else if(tmp == "Wide" & var_exists(df, template_cols_core) & var_matches(df, "sc")){
+  #   req_cols <- template_wide_sch
+  # } else if(tmp == "Wide" & var_exists(df, template_cols_core) & var_matches(df, "vmmc")){
+  #   req_cols <- template_wide_vmmc
+  # }
+
+  return(req_cols)
+}
+
+#' @title Extract Technical Areas
+#'
+#' @param df_cir Data frame to extract columns from
+#'
+#' @export
+#'
+
+cir_template_ta <- function(df_cir) {
+
+  setdiff(names(df_cir),
+          c(template_cols_core, "indicator",
+            template_cols_disaggs)) %>%
+    stringr::str_extract("[^.]+") %>%
+    stringr::str_to_lower() %>%
+    tibble::tibble(indicator = .) %>%
+    dplyr::mutate(
+      ta = dplyr::case_when(
+        indicator == "val" ~ "ALL",
+        indicator %in% c("dreams_fp", "dreams_gend_norm") ~ "DREAMS",
+        indicator %in% c("gend_gbv") ~ "GENDER",
+        indicator %in% c("ovc_enroll", "ovc_offer",
+                 "ovc_vl_eligible", "ovc_vlr", "ovc_cls") ~ "OVC",
+        indicator %in% c("tx_pvls_eligible", "tx_pvls_sample",
+                 "tx_pvls_result_returned",
+                 "pmtct_eid_eligible", "pmtct_eid_result_returned") ~ "LAB",
+        indicator %in% c("prep_screen", "prep_eligible", "prep_new_verify",
+                 "prep_1month", "prep_ct_verify") ~ "PrEP",
+        indicator %in% c("sc_arvdisp", "sc_curr", "sc_lmis") ~ "SCH",
+        indicator %in% c("tx_new_verify", "tx_rtt_verify",
+                 "tx_curr_verify", "tx_pvls_verify") ~ "KP",
+        indicator %in% c("vmmc_ae") ~ "VMMC",
+        TRUE ~ NA_character_
+      )
+    ) %>%
+    dplyr::distinct(ta) %>%
+    dplyr::pull()
+}
+
+
+
+#' Check if all variables exist
 #'
 #' @export
 #' @param df data frame to check against
 #' @param var quoted variable of interest
 
-var_exists <- function(df, var) {
-
-  #var %in% names(df)
-  all(var %in% names(df))
+var_exists <- function(df, var, all = TRUE) {
+  if (all) {
+    all(var %in% names(df))}
+  else {
+    any(var %in% names(df))
+  }
 }
-
 
 #' Check if any variable matches this pattern
 #'

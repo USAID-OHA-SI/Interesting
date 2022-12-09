@@ -189,10 +189,27 @@ library(glue)
 
     # Submissions Page ----
 
+    # List of selected submissions
+
     subm_files <- NULL
 
-    # List of selected submissions
     observeEvent(input$submRaw, {
+      print("--- Selection of the submissions ---")
+
+      # Clear Error Messages
+      output$submNotification <- renderUI({
+        HTML(as.character(p("")))
+      })
+
+      # Clear validations title
+      output$submProcessResults <- renderUI({
+        HTML(as.character(h4("")))
+      })
+      # Clear data title
+      output$submProcessData <- renderUI({
+        HTML(as.character(h4("")))
+      })
+
 
       if (is.null(input$submRaw)) return(NULL)
 
@@ -228,9 +245,11 @@ library(glue)
     })
 
     # Meta data from selected file
+
     df_metas <- NULL
 
     observeEvent(input$getSubmMeta, {
+      print("--- Metadata of the submissions ---")
 
       if (is.null(subm_files)) {
         # Error
@@ -318,6 +337,10 @@ library(glue)
             columns = "filename",
             valueColumns = "subm_valid",
             backgroundColor = DT::styleEqual(FALSE, glitr::burnt_sienna_light)
+          ) %>%
+          DT::formatStyle(
+            1:5,
+            'vertical-align'='top'
           )
       })
 
@@ -331,6 +354,7 @@ library(glue)
     df_imports <- NULL
 
     observeEvent(input$importSubm, {
+      print("--- Import of the submissions ---")
 
       if (is.null(df_metas)) {
         output$submNotification <- renderUI({
@@ -352,8 +376,8 @@ library(glue)
       df_valids <- df_metas %>%
         filter(subm_valid == TRUE) %>%
         rename(subm_type = type) %>%
-        left_join(subm_files, by = c("filename" = "name")) %>%
-        select(-type, -size)
+        dplyr::left_join(subm_files, by = c("filename" = "name")) %>%
+        dplyr::select(-type, -size)
 
       v_files <- df_valids %>% pull(filename)
 
@@ -410,11 +434,6 @@ library(glue)
         })
       }
 
-      #print(df_imports)
-      # glimpse(df_imports[[1]]$checks)
-      # glimpse(df_imports[[1]]$data)
-      #print(length(df_imports))
-
       output$submFilesList <- DT::renderDataTable({
         DT::datatable(
           df_imports_checks,
@@ -426,7 +445,8 @@ library(glue)
             scrollX = TRUE,
             scrollY = "250px"
           )
-        )
+        ) %>%
+          DT::formatStyle(TRUE, 'vertical-align'='top')
       })
 
       output$submFilesData <- DT::renderDataTable({
@@ -440,7 +460,8 @@ library(glue)
             scrollX = TRUE,
             scrollY = "300px"
           )
-        )
+        ) %>%
+          DT::formatStyle(TRUE, 'vertical-align'='top')
       })
     })
 
@@ -449,6 +470,7 @@ library(glue)
     df_transformed <- NULL
 
     observeEvent(input$transformSubm, {
+      print("--- Transformation of the submissions ---")
 
       if (is.null(df_imports)) {
         output$submNotification <- renderUI({
@@ -473,10 +495,25 @@ library(glue)
         cir_gather() %>%
         cir_munge_string()
 
+      if (nrow(df_transformed > 0)) {
+        # Update header - Data
+        output$submProcessData <- renderText({
+          HTML(as.character(h4("Selected submission(s) transformed data")))
+        })
+      }
+      else {
+        output$submNotification <- renderUI({
+          HTML(as.character(p("ERROR - Unable to reshape data. See validations results for errors."),
+                            style = "color:red"))
+        })
+
+        return(null)
+      }
+
       output$submFilesData <- DT::renderDataTable({
         DT::datatable(
           df_transformed,
-          colnames = str_to_upper(str_replace_all(names(df_imports_data), "_", " ")),
+          colnames = str_to_upper(str_replace_all(names(df_transformed), "_", " ")),
           filter = "top",
           height = "300px",
           options = list(
@@ -493,6 +530,7 @@ library(glue)
     df_validated <- NULL
 
     observeEvent(input$validateSubm, {
+      print("--- Validation of the submissions ---")
 
       if (is.null(df_transformed)) {
         output$submNotification <- renderUI({

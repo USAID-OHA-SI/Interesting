@@ -15,10 +15,7 @@ Authors:
 \itemize{
   \item Nelly Maina \email{nmaina@usaid.gov}
   \item Nashiva McDavid \email{nmcdavid@usaid.gov}
-<<<<<<< HEAD
   \item Baboyma Kagniniwa \email{bkagniniwa@usaid.gov}
-=======
->>>>>>> feature/process-flow
 }
 
 }

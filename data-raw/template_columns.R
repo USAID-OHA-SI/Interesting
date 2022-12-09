@@ -23,6 +23,11 @@
 
   files <- dir({template_path}, pattern = "*.xlsx", full.names = TRUE)
 
+  template_wide_techareas <- files %>%
+    basename() %>%
+    stringr::str_extract("(?<=Wide -).*(?=.xlsx)") %>%
+    stringr::str_trim(side = "both")
+
   df_tabs <- map_dfr(files,
                      ~ tibble(filename = .x,
                               tabname = map(filename, readxl::excel_sheets)) %>%
@@ -30,10 +35,13 @@
     filter(tabname != "meta")
 
   #type of template
-  tab_type <- purrr::map(.x = files, ~tail(strsplit(.x,split=" ")[[1]],1)) %>%
+  tab_type <- purrr::map(
+    .x = files,
+    ~tail(strsplit(.x, split=" ")[[1]], 1)) %>%
     unlist()
 
   tab_type <- tab_type %>% stringr::str_extract("[^.]+")
+
 
 
   #loop
@@ -63,6 +71,35 @@
   template_wide_prep <- lst2[[6]]
   template_wide_sch <- lst2[[7]]
   template_wide_vmmc <- lst2[[8]]
+
+  template_cols_wide <- c(
+    template_wide_dreams,
+    template_wide_gender,
+    template_wide_kp,
+    template_wide_lab,
+    template_wide_ovc,
+    template_wide_prep,
+    template_wide_sch,
+    template_wide_vmmc
+  ) %>%
+    unique()
+
+  template_cols_wgroups <- list(
+    "dreams" = template_wide_dreams,
+    "gender" = template_wide_gender,
+    "kp" = template_wide_kp,
+    "lab" = template_wide_lab,
+    "ovc" = template_wide_ovc,
+    "prep" = template_wide_prep,
+    "sch" = template_wide_sch,
+    "vmmc" = template_wide_vmmc
+  )
+
+  usethis::use_data(template_cols_wide, overwrite = TRUE)
+
+  usethis::use_data(template_wide_techareas, overwrite = TRUE)
+
+  usethis::use_data(template_cols_wgroups, overwrite = TRUE)
 
   usethis::use_data(template_wide_dreams, overwrite = TRUE)
   usethis::use_data(template_wide_gender, overwrite = TRUE)

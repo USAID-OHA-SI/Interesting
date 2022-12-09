@@ -12,12 +12,10 @@
 
 cir_import <- function(filepath, template = NULL){
 
-  #tmp <- ifelse(is.null(template) | is.na(template), "[Not provided]", template)
-  tmp <- template
-
+  # Store all validation checks here
   checks <- tibble::tibble()
 
-  logger::log_info("\nSubmission template: {null_to_chr(tmp)} ...")
+  logger::log_info("\nSubmission template: {null_to_chr(template)} ...")
 
   df <- filepath %>%
     readxl::excel_sheets() %>% # TODO - Use sheets_valid from `vinit`
@@ -53,7 +51,7 @@ cir_import <- function(filepath, template = NULL){
       }
 
       # Skip import validations
-      if (is.null(tmp)) {
+      if (is.null(template)) {
         logger::log_info("\nSkipping import validations ...")
 
         df_tab <- df_tab %>%
@@ -66,7 +64,7 @@ cir_import <- function(filepath, template = NULL){
       }
 
       # Validate only if template is provided
-      vimp <- validate_import(df_tab, template = tmp)
+      vimp <- validate_import(df_tab, template = template)
 
       vimp$checks <- vimp$checks %>%
         dplyr::mutate(filename = basename(filepath), sheet = .x)
@@ -76,7 +74,6 @@ cir_import <- function(filepath, template = NULL){
       # Making sure records can be traced back to submissions
       vimp$data <- vimp$data %>%
         dplyr::mutate(filename = basename(filepath),
-                      #temp_type = template,
                       sheet = .x,
                       row_id = dplyr::row_number() + 2)
 

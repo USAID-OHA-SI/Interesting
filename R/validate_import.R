@@ -8,52 +8,33 @@
 validate_import <- function(df, template){
 
   # Defaults
-  tmp <- template
-  req_cols <- NULL
-
-  #check columns
-  # TODO - Change this to case_when and move it to a separate function: eg: validate_template
-  # TODO - Include the core columns into the validations
-  if(tmp == "Long" & var_exists(df, template_cols_long)){
-    req_cols <- template_cols_long
-  } else if(tmp == "Semi-wide" & var_exists(df, c(template_cols_core, template_cols_disaggs)) & !var_exists(df, template_cols_ind)){
-    req_cols <- template_cols_semiwide
-  } else if(tmp == "Wide" & var_exists(df, template_cols_core) & var_matches(df, "dreams")){
-    req_cols <- template_wide_dreams
-  } else if(tmp == "Wide" & var_exists(df, template_cols_core) & var_matches(df, "gend_gbv")){
-    req_cols <- template_wide_gender
-  } else if(tmp == "Wide" & var_exists(df, template_cols_core) & var_matches(df, "^[ct]_verify")){
-    req_cols <- template_wide_kp
-  } else if(tmp == "Wide" & var_exists(df, template_cols_core) & var_matches(df, "eligible|sample|result")){
-    req_cols <- template_wide_lab
-  } else if(tmp == "Wide" & var_exists(df, template_cols_core) & var_matches(df, "ovc")){
-    req_cols <- template_wide_ovc
-  } else if(tmp == "Wide" & var_exists(df, template_cols_core) & var_matches(df, "prep")){
-    req_cols <- template_wide_prep
-  } else if(tmp == "Wide" & var_exists(df, template_cols_core) & var_matches(df, "sc")){
-    req_cols <- template_wide_sch
-  } else if(tmp == "Wide" & var_exists(df, template_cols_core) & var_matches(df, "vmmc")){
-    req_cols <- template_wide_vmmc
-  }
+  cols <- names(df)
+  req_cols <- cir_template_cols(df, template = template)
 
   # Check multi ous sheets
   ous <- check_distinct_ous(df)
 
+  # Check if wide templates has mixed tech areas
+  ta <- NULL
+
   # Check data structure based on template
   if (!is.null(req_cols)) {
-    #missing <- flag_missing(req_cols, names(df))
-    missing <- setdiff(req_cols, names(df))
-    #extra <- flag_extra(req_cols, names(df))
-    extra <- setdiff(names(df), req_cols)
+    missing <- setdiff(req_cols, cols)
+    extra <- setdiff(cols, req_cols)
+
+    # Tech area
+    if (template == "Wide") {
+      ta <- cir_template_ta(df)
+    }
+
+    # Restrict Extract Columns
+    if (length(extra) > 0) {
+      df <- cir_restrict_cols(df)
+    }
 
   } else {
     missing <- "[template could not be confirmed]"
-    extra <- missing
-  }
-
-  # Restrict Extract Columns
-  if (length(extra) > 0 & !is.null(req_cols)) {
-    df <- cir_restrict_cols(df)
+    extra <- "[template could not be confirmed]"
   }
 
   # Validations
@@ -61,8 +42,9 @@ validate_import <- function(df, template){
     filename = NA_character_,
     sheet = NA_character_,
     template_confirmed = !is.null(req_cols),
-    cols_missing = paste(missing, collapse = ", "),
-    cols_extra = paste(extra, collapse = ", "),
+    template_tech_areas = paste0(ta, collapse = ", "),
+    cols_missing = paste0(missing, collapse = ", "),
+    cols_extra = length(extra), #paste0(extra, collapse = ", "),
     cols_extra_restricted = length(extra) > 0,
     has_data = nrow(df) > 0,
     has_multi_ous = length(ous) > 1,
@@ -72,6 +54,7 @@ validate_import <- function(df, template){
   #PRINT VALIDATION
   if (interactive()) {
     cat("\n---- IMPORT VALIDATIONS ----",
+        "\nDoes sheet have mixed technical areas?", paint_yellow(vimp$template_tech_areas),
         "\nAre there any missing columns on import?", paint_yellow(vimp$cols_missing),
         "\nAre there any extra columns on import?", paint_yellow(vimp$cols_extra),
         "\nIs sheet empty?", paint_iftrue(!vimp$has_data),
