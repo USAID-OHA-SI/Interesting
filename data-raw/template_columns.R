@@ -56,7 +56,6 @@
     lst2[[i]] <-  lst[[i]] %>%
       pmap_dfr(.f = ~readxl::read_excel(..1, ..2)) %>%
       names()
-
   }
 
   #can I use glue?
@@ -111,10 +110,8 @@
   usethis::use_data(template_wide_vmmc, overwrite = TRUE)
 
 
-  #-----
-
-
   #store meta data columns
+
   template_cols_value <- "val"
   template_cols_ind <- "indicator"
   template_cols_disaggs <- c("sex", "age", "population", "otherdisaggregate", "numdenom")
@@ -130,3 +127,16 @@
   usethis::use_data(template_cols_meta, overwrite = TRUE)
   usethis::use_data(template_cols_core, overwrite = TRUE)
 
+  #store template metadata
+
+  template_metadata <- readxl::read_excel("data-raw/templates/FY22_CIRG_Templates-Metadata.xlsx",
+                                      sheet = "Wide Headers",
+                                      col_types = "text",
+                                      n_max = Inf) %>%
+    janitor::clean_names() %>%
+    dplyr::select(tech_area, indicator_code, disaggregate_group,
+                  ends_with("_header"),
+                  indicator, age, sex, otherdisaggregate, population,
+                  numerator_denominator)
+
+  usethis::use_data(template_metadata, overwrite = TRUE)

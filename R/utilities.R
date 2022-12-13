@@ -212,6 +212,48 @@ cir_extract_meta <- function(filepath, meta_type = NULL){
   return(meta)
 }
 
+#' Store Meta Data Information about Template
+#'
+#' @description store meta data information for later validations
+#'
+#' @note TODO - This seems similar to `cir_extract_meta` function. Try this for meta: identify, extract, validate and store
+#'
+#' @param filepath filepath to sumbitted template
+#'
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' # meta_df <- cir_store_meta(filepath)}
+
+cir_store_meta <- function(filepath){
+
+  if(is_metatab(filepath)){
+    metatable <- readxl::read_excel(filepath, range = "meta!B1:E2") %>% # BK - What if the meta tab is moved?
+      stack() %>%
+      rename(mvalue = values,
+             mtype = ind) %>%
+      select(mtype, mvalue)
+
+    meta_df <- metatable %>%
+      dplyr::mutate(mtype =
+                      stringr::str_remove_all(mtype,
+                                              "Template |CIRG Reporting |, eg 2020.1|perating |nit|\\/Country|\r\n")
+                    %>% tolower,
+                    mtype = stringr::str_c(mtype, "_meta")) %>%
+      tidyr::pivot_wider(names_from = mtype, values_from = mvalue) %>%
+      dplyr::mutate(filepaths = basename(filepath),
+                    file_size = file.size(filepath),
+                    google_id = NA,
+                    period_meta = str_replace(period_meta, pattern=" ", repl=""))
+
+
+  } else {
+    meta_df <- NA
+  }
+
+  return(meta_df)
+}
 
 #' @title Validate template
 #'
@@ -334,6 +376,39 @@ cir_template_ta <- function(df_cir) {
     ) %>%
     dplyr::distinct(ta) %>%
     dplyr::pull()
+}
+
+
+#' Restrict CIR data frame columns
+#'
+#' @param df CIR data frame imported via `cir_import()`
+#'
+#' @export
+
+cir_restrict_cols <- function(df){
+
+  # defaults cols
+  cols <- template_cols_core
+
+  # Template's Tech Area
+  ta <- cir_template_ta(df)
+
+  # Valid Columns
+  cols <- NULL
+
+  if (ta == "ALL") {
+    cols <- intersect(template_cols_long, names(df))
+  } else if (is.na(ta)) {
+    cols <- intersect(template_cols_semiwide, names(df))
+  } else {
+    cols <- intersect(template_cols_wgroups[ta], names(df))
+  }
+
+  if (is.null(cols)) return(NULL)
+
+  df <- dplyr::select_at(df, .vars = vars(all_of(cols)))
+
+  return(df)
 }
 
 

@@ -138,6 +138,22 @@
       return(subm$data)
     })
 
+  # Transformation
+  df_trans <- df_subm$data %>%
+    cir_gather() %>%
+    cir_munge_string()
+
+  df_trans <- df_subm$data %>%
+    cir_reshape()
+
+  # Template DataElement Pattern
+  # <indicator>.<age>.<sex>.<otherdisaggs>.<population>.<numdenom>
+  df_trans %>% distinct(indicator)
+  df_trans %>% distinct(sex)
+  df_trans %>% distinct(ageasentered)
+  df_trans %>% distinct(otherdisaggregate)
+  df_trans %>% distinct(otherdisaggregate_sub)
+
   # Import, Validations & Transformations
   df_subm <- subm %>%
     dplyr::first() %>%
