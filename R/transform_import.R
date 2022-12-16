@@ -23,7 +23,6 @@ cir_gather <- function(df){
 
   # No need to reshape data in long format
   if(var_exists(df, "val")){
-    #df <- df %>% mutate(temp_type = "Long")
     return(df)
   }
 
@@ -37,31 +36,34 @@ cir_gather <- function(df){
 
   #reshape from wide to long
   df <- df %>%
-    #tidyr::gather(indicator, val, all_of(data_cols), na.rm = TRUE)
     tidyr::pivot_longer(cols = all_of(data_cols),
-                        names_to = "indicator",
+                        names_to = "indicator_code",
                         values_to = "val")
 
   # seperate former col names into indicator & disaggregates
-  if(any(stringr::str_detect(df$indicator, ".n"))) {
+  if(any(stringr::str_detect(df$indicator_code, "[\\.]+"))) {
 
     df <- tidyr::separate(
       df,
-      col = indicator,
+      col = indicator_code,
       into = c("indicator", "age", "sex",
                "otherdisaggregate", "population",
                "numdenom"),
       sep = "\\.",
-      fill = "right"
+      fill = "right",
+      remove = FALSE
     )
   }
 
-  #reorganize
-  df <- df %>%
-    select(any_of(meta_cols), all_of(core_cols), val) %>%
-    rename(ageasentered = age,
-           numeratordenom = numdenom,
-           otherdisaggregate_sub = population)
+  if(any(meta_cols %in% names(df))) {
+    df <- df %>%
+      dplyr::relocate(meta_cols, .before = 1)
+  }
+
+  # if(any(c(meta_cols, "test_col") %in% names(df))) {
+  #   df <- df %>%
+  #     dplyr::relocate(meta_cols, .before = 1)
+  # }
 
   return(df)
 }
@@ -76,32 +78,40 @@ cir_gather <- function(df){
 
 cir_munge_string <- function(df){
 
-  # Note: Moved this to gather function
+  #reorganize
   df <- df %>%
-    mutate(reportingperiod = str_replace(reportingperiod, pattern=" ", repl=""),
-           reportingperiod = toupper(reportingperiod),
-           indicator = toupper(indicator),
-           indicator = str_replace(indicator, pattern="PREP", repl="PrEP"),
-           indicator = stringr::str_replace_all(indicator, " |  ", "_"),
-           ageasentered = stringr::str_replace_all(ageasentered, " ", ""),
-           ageasentered = stringr::str_replace(ageasentered, pattern= "_", repl = "-"),
-           ageasentered = dplyr::recode(ageasentered,
-                                        "u1" = "<01",
-                                        "u10" = "<10",
-                                        "unknownage" = "Unknown",
-                                        "o50" = "50+"),
-           sex = dplyr::recode(sex,
-                               "f" = "Female",
-                               "F" = "Female",
-                               "m" = "Male",
-                               "M" = "Male"),
-           #sex = na_if(sex, " "),
-           sex = ifelse(indicator == "DREAMS_FP" & is.na(sex), "Female", sex),
-           numeratordenom = stringr::str_replace_all(numeratordenom, " ", ""),
-           numeratordenom = toupper(numeratordenom),
-           across(where(is.character), ~na_if(., "")),
-           val = as.numeric(val)) %>%
-    filter(!is.na(val) & !is.na(indicator))
+    dplyr::rename(ageasentered = age,
+                  numeratordenom = numdenom,
+                  otherdisaggregate_sub = population)
+
+  # Clean and/or recode values
+  df <- df %>%
+    dplyr::mutate(
+      reportingperiod = stringr::str_replace(reportingperiod, " ", ""),
+      reportingperiod = toupper(reportingperiod),
+      indicator = toupper(indicator),
+      indicator = stringr::str_replace(indicator, "PREP", "PrEP"),
+      ageasentered = stringr::str_replace_all(ageasentered, " ", ""),
+      ageasentered = stringr::str_replace(ageasentered, "_", "-"),
+      ageasentered = case_when(
+      stringr::str_detect(ageasentered, "unknown") ~ "Unknown Age",
+        stringr::str_detect(ageasentered, "^u") ~
+         stringr::str_replace(ageasentered, "^u", "<"),
+        stringr::str_detect(ageasentered, "^o") ~
+         paste0(stringr::str_remove(ageasentered, "^o"), "+"),
+        TRUE ~ ageasentered
+      ),
+      sex = dplyr::recode(sex,
+                          "f" = "Female",
+                          "F" = "Female",
+                          "m" = "Male",
+                          "M" = "Male"),
+      sex = ifelse(indicator == "DREAMS_FP" & is.na(sex), "Female", sex),
+      numeratordenom = stringr::str_replace_all(numeratordenom, " ", ""),
+      numeratordenom = toupper(numeratordenom),
+      across(where(is.character), ~na_if(., "")),
+      val = as.numeric(val)) %>%
+    dplyr::filter(!is.na(val) & !is.na(indicator))
 
   return(df)
 }

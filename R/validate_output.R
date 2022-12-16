@@ -8,23 +8,88 @@
 
 validate_output <- function(df, output_path, content=FALSE, datim_path=NULL){
 
+  # Extract Meta Info
+  subm_file <- df %>%
+    dplyr::filter(!is.na(filename)) %>%
+    dplyr::distinct(filename) %>%
+    dplyr::pull() %>%
+    dplyr::first()
 
+  subm_sheet <- df %>%
+    dplyr::filter(!is.na(sheet)) %>%
+    dplyr::distinct(sheet) %>%
+    dplyr::pull() %>%
+    dplyr::first()
+
+  subm_pds <- df %>%
+    dplyr::filter(!is.na(reportingperiod)) %>%
+    dplyr::distinct(reportingperiod) %>%
+    dplyr::pull()
+
+  # Notifications
   if (interactive()) {
     cat("\n---- OUTPUT VALIDATIONS ----",
         "\n---- Missing Values ----")
   }
 
-  check_output_cols(df) # NOTE - Looks like a repetition
-  check_orgunituids(df)
-  check_mechs(df)
-  #check_inds(df)
-  #check_disaggs(df)
+  ou_miss <- df %>% get_missing("operatingunit")
+  pd_miss <- df %>% get_missing("reportingperiod")
+  pd_fmt <- df %>% match_value("reportingperiod")
+
+  curr_dt <- glamr::curr_date()
+
+  pd_post <- glamr::pepfar_data_calendar %>%
+    mutate(pd = paste0("FY", str_sub(fiscal_year, 3,4),
+                       "Q", quarter)) %>%
+    filter(entry_close <= curr_dt) %>%
+    pull(pd) %>%
+    has_element(subm_pds)
+
+
+  org_miss <- df %>% get_missing("orgunituid")
+
+  mech_miss <- df %>% get_missing("mech_code")
+
+  ind_miss <- df %>% get_missing("indicator")
+
+  nd_miss <- df %>% get_missing("numeratordenom")
+
+  # Validations
+  vout <- tibble::tibble(
+    filename = subm_file,
+    sheet = subm_sheet,
+    period = paste0(subm_pds, collapse = ", "),
+    ou_missing = paste0(ou_miss, collapse = ", "),
+    pd_missing = paste0(pd_miss, collapse = ", "),
+    org_missing = paste0(org_miss, collapse = ", "),
+    mech_missing = paste0(mech_miss, collapse = ", "),
+    ind_missing = paste0(ind_miss, collapse = ", "),
+    nd_missing = paste0(nd_miss, collapse = ", ")
+  )
+
+  if (interactive()) {
+    cat("\n",
+        "\nOperaringunit: ", vout$ou_missing,
+        "\nReporting Period: ", vout$pd_missing,
+        "\nOrgunit: ", vout$org_missing,
+        "\nMechanisms: ", vout$mech_missing,
+        "\nIndicator: ", vout$ind_missing,
+        "\nNum/Denominator: ", vout$nd_missing,
+        "\n")
+  }
 
   if (interactive()) {
     cat("\n---- Invalid Values ----")
   }
 
-  check_content(df)
+  #check_output_cols(df) # NOTE - Looks like a repetition
+  #check_operatingunit(df)
+  #check_orgunituids(df)
+  #check_mechs(df)
+  #check_inds(df)
+  #check_disaggs(df)
+
+  #check_content(df)
 
   # #optional check
   # if (content & !is.null(datim_path)) {
@@ -63,18 +128,43 @@ check_output_cols <- function(df){
 }
 
 
+#' @title Check OU
+#'
+#' @param df Data frame from transformed submission
+#' @param ou Name of OU/Country submitting data
+
+check_operatingunit <- function(df, ou) {
+
+  # Countries Reference List
+  cntries <- pepfar_countries %>%
+    dplyr::filter(ou_country == ou | operatingunit == ou) %>%
+    dplyr::pull(country)
+
+  # Check if Operating Unit listed is valid
+  df %>%
+    dplyr::filter(!is.na(operatingunit)) %>%
+    dplyr::rowwise() %>%
+    dplyr::mutate(valid_ou = operatingunit %in% cntries) %>%
+    dplyr::ungroup() %>%
+    dplyr::filter(!valid_ou) %>%
+    dplyr::distinct(row_id) %>%
+    dplyr::pull(row_id)
+}
+
 
 #' Validate orgunituids for export
 #'
-#' @param df HFR data framed created by ``cir_process_template()``
+#' @param df HFR data framed created by `cir_process_template()`
+#' @param ref_orgs Datim OU Orgunits Reference Data as data frame
 
-check_orgunituids <-function(df){
+check_orgunituids <- function(df, ref_orgs){
 
-  #missing orgunituid?
-  missing_orgunituid <- count_missing(df, orgunituid)
+  cntries <- df %>%
+    dplyr::filter(!is.na(operatingunit)) %>%
+    dplyr::distinct(operatingunit) %>%
+    dplyr::pull()
 
-  #print validation
-  cat("\nAre there any missing orgunituids?", missing_orgunituid)
+  return(cntries)
 }
 
 

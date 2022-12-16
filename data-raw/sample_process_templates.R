@@ -139,6 +139,22 @@
     })
 
   # Transformation
+
+  #Use template Metadata as lookup table
+  tmp_meta <- template_metadata %>%
+    select(-tech_area, -ends_with("_header")) %>%
+    mutate(indicator_code = case_when(
+      str_detect(indicator_code, "pep|sexual violence") ~
+        str_remove_all(indicator_code, " "),
+      str_detect(indicator_code, "physical and") ~
+        str_replace_all(indicator_code, " | and\\/or ", "_"),
+      TRUE ~ indicator_code
+    )) %>% distinct()
+
+  df_subm$data %>%
+    cir_gather() %>%
+    left_join(tmp_meta, by = "indicator_code")
+
   df_trans <- df_subm$data %>%
     cir_gather() %>%
     cir_munge_string()
@@ -159,6 +175,52 @@
     dplyr::first() %>%
     cir_processing()
 
+  # Validate outputs -- Missing
+
+  df_trans %>% glimpse()
+
+  df_trans %>% validate_output()
+
+  df_trans %>% get_missing("operatingunit")
+  df_trans %>% get_missing("reportingperiod")
+  df_trans %>% match_value("reportingperiod")
+
+  curr_dt <- glamr::curr_date()
+
+  pepfar_data_calendar %>%
+    mutate(pd = paste0("FY", str_sub(fiscal_year, 3,4),
+                       "Q", quarter)) %>%
+    filter(entry_close <= curr_dt) %>%
+    pull(pd) %>%
+    has_element("FY22Q4")
+
+
+  df_trans %>% get_missing("orgunituid")
+
+  df_trans %>% get_missing("mech_code")
+
+  df_trans %>% get_missing("indicator")
+
+  df_trans %>% get_missing("numeratordenom")
+
+
+  # Validate outputs -- wrong values
+
+  df_trans %>%
+    check_operatingunit(ou = meta$ou)
+
+  datim_sqlviews(username = glamr::datim_user(),
+                 password = glamr::datim_pwd())
+
+  df_orgs <- meta$ou %>%
+    purrr::map_dfr(~datim_orgunits(
+      username = glamr::datim_user(),
+      password = glamr::datim_pwd(),
+      cntry = .x,
+      base_url = "https://datim.org"))
+
+  df_trans %>%
+    check_orgunituids()
 
 
 

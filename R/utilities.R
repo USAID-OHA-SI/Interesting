@@ -488,16 +488,66 @@ flag_extra <- function(required, submitted){
 
 count_missing <- function(df, var){
 
+  nr <- nrow(df)
+
   missing <- df %>%
     dplyr::filter(is.na({{var}})) %>%
-    NROW()
+    nrow()
 
-  missing_pct <- round(missing/NROW(df), 2)*100
-  missing_pct <- paste0("(",missing_pct, "%)")
+  missing_pct <- round(missing/nr, 2)*100
+  missing_pct <- paste0("(", missing_pct, "%)")
 
-  count <- ifelse(missing > 0, crayon::red(missing, "out of", NROW(df), "rows", missing_pct), crayon::green("No"))
+  count <- ifelse(missing > 0,
+                  crayon::red(missing, "out of", NROW(df), "rows", missing_pct),
+                  crayon::green("No"))
+
   return(count)
 }
+
+#' @title Get rows with missing values
+#'
+#' @export
+#' @param df data frame
+#' @param var variable to count missing values
+
+get_missing <- function(df, var){
+
+  df_miss <- df
+
+  if (!"row_id" %in% names(df_miss)) {
+    df_miss <- df_miss %>%
+      dplyr::mutate(row_id = row_number() + 2)
+  }
+
+  df_miss %>%
+    dplyr::filter(is.na({{var}})) %>%
+    dplyr::distinct(row_id) %>%
+    dplyr::pull(row_id)
+}
+
+
+#' @title Get rows with values not matching a pattern
+#'
+#' @export
+#' @param df data frame
+#' @param var variable to count missing values
+
+match_value <- function(df, var, pattern = "FY\\d{2}Q\\d{1}"){
+
+  df_miss <- df
+
+  if (!"row_id" %in% names(df_miss)) {
+    df_miss <- df_miss %>%
+      dplyr::mutate(row_id = row_number() + 2)
+  }
+
+  df_miss %>%
+    dplyr::mutate(vmatch = stringr::str_match({{var}}, pattern)) %>%
+    dplyr::filter(isFALSE(vmatch)) %>%
+    dplyr::distinct(row_id) %>%
+    dplyr::pull(row_id)
+}
+
 
 
 #' Not provided if null
