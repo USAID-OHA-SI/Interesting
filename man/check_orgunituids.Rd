@@ -4,10 +4,12 @@
 \alias{check_orgunituids}
 \title{Validate orgunituids for export}
 \usage{
-check_orgunituids(df)
+check_orgunituids(df, ref_orgs)
 }
 \arguments{
 \item{df}{HFR data framed created by \code{cir_process_template()}}
+
+\item{ref_orgs}{Datim OU Orgunits Reference Data as data frame}
 }
 \description{
 Validate orgunituids for export
