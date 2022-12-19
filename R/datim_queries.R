@@ -3,6 +3,9 @@
 #' @param username
 #' @param password
 #'
+#' @export
+#' @return SQLView uid or dataset as data frame
+#'
 datim_sqlviews <- function(username, password,
                            view_name = NULL,
                            dataset = FALSE,
@@ -67,6 +70,13 @@ datim_sqlviews <- function(username, password,
     # Apply varialbe or field query if needed
     if (!is.null(query)) {
 
+      q <- names(query$params) %>%
+        map_chr(~paste0(.x, "=", query$params[.x])) %>%
+        paste0(collapse = "&") %>%
+        paste0("QUERY PARAMS: type=", query$type, "&", .)
+
+      print(print(glue::glue("SQL View Params: {q}")))
+
       if (query$type == "variable") {
         vq <- names(query$params) %>%
           map_chr(~paste0(.x, ":", query$params[.x])) %>%
@@ -79,13 +89,16 @@ datim_sqlviews <- function(username, password,
       }
       else if (query$type == "field") {
         fq <- names(query$params) %>%
-          map_chr(~paste0(.x, ":eq:", query[.x])) %>%
+          map_chr(~paste0("filter=", .x, ":eq:", query$params[.x])) %>%
           paste0(collapse = "&") %>%
-          paste0("&filter=", .)
+          paste0("&", .)
 
         print(glue::glue("SQL View field query: {fq}"))
 
         dta_url <- dta_url %>% paste0(fq)
+      }
+      else {
+        print(glue::glue("Error - Invalid query type: {query$type}"))
       }
     }
 
@@ -130,19 +143,120 @@ datim_sqlviews <- function(username, password,
 #'
 #' @param username
 #'
+#' @export
+#' @return OU Orgunit as data frame
+#'
 datim_orgunits <- function(username, password, cntry, base_url = NULL) {
 
-  uid <- grabr::get_ouuid(cntry, username, password)
+  if(!cntry %in% pepfar_countries$country) return(NULL)
 
-  datim_sqlviews(
+  # Get Country ISO Code
+  cntry_iso <- pepfar_countries %>%
+    dplyr::filter(country == cntry) %>%
+    dplyr::pull(country_iso)
+
+  # get distinct levels
+  cntry_levels <- pepfar_countries %>%
+    dplyr::filter(country == meta$ou) %>%
+    dplyr::select(ends_with("_lvl")) %>%
+    tidyr::pivot_longer(cols = ends_with("_lvl"),
+                        names_to = "orgunit_label",
+                        values_to = "orgunit_level") %>%
+    dplyr::mutate(orgunit_label = str_remove(orgunit_label, "_lvl$"),
+                  orgunit_level = as.character(orgunit_level))
+
+  # Get orgunits
+  .orgs <- datim_sqlviews(
     username,
     password,
     view_name = "Data Exchange: Organisation Units",
     dataset = TRUE,
     query = list(
       type = "variable",
-      params = list("OU" = uid)
+      params = list("OU" = cntry_iso)
     ),
     base_url = base_url
   )
+
+  # Clean up orgunit
+  .orgs %>%
+    dplyr::select(-c(orgunit_code, moh_id)) %>%
+    dplyr::rename_with(.cols = ends_with("internal_id"),
+                       .fn = ~ str_replace(., "internal_id", "uid")) %>%
+    dplyr::rename_with(.cols = starts_with("regionor"),
+                       .fn = ~str_remove(., "regionor")) %>%
+    dplyr::select(orgunit = orgunit_name, orgunituid = orgunit_uid,
+                  orgunit_level, orgunit_parent, orgunit_parent_uid,
+                  dplyr::everything()) %>%
+    dplyr::left_join(cntry_levels, by = "orgunit_level") %>%
+    dplyr::relocate(orgunit_label, .after = orgunit_level) %>%
+    dplyr::left_join(pepfar_countries[, c("operatingunit", "country")],
+                     by = c("country_name" = "country"))
+}
+
+#' @title Pull Orgunits
+#'
+#' @param username
+#'
+#' @export
+#' @return OU Orgunit as data frame
+#'
+datim_mechs <- function(username, password, cntry, base_url = NULL) {
+
+  df_mechs <- datim_sqlviews(
+    username,
+    password,
+    view_name = "Mechanisms partners agencies OUS Start End",
+    dataset = TRUE,
+    query = list(
+      type = "field",
+      params = list("ou" = cntry, agency = "USAID")
+    ),
+    base_url = base_url
+  )
+
+  # Reshape Results - mech code, award number, and name separations chars
+  sep_chrs <- c("[[:space:]]+",
+                "[[:space:]]+-",
+                "[[:space:]]+-[[:space:]]+",
+                "[[:space:]]+-[[:space:]]+-",
+                "[[:space:]]+-[[:space:]]+-[[:space:]]+",
+                "[[:space:]]+-[[:space:]]+-[[:space:]]+-",
+                "-[[:space:]]+",
+                "-[[:space:]]+-",
+                "-[[:space:]]+-[[:space:]]+",
+                "-[[:space:]]+-[[:space:]]+-",
+                "-[[:space:]]+-[[:space:]]+-[[:space:]]+",
+                "-[[:space:]]+-[[:space:]]+-[[:space:]]+-")
+
+  # Reshape Results - separation
+  df_mechs %>%
+    dplyr::rename(
+      mech_code = code,
+      operatingunit = ou,
+      prime_partner_name = partner,
+      prime_partner_uid = primeid,
+      funding_agency = agency,
+      operatingunit = ou
+    ) %>%
+    dplyr::mutate(
+      mech_name = stringr::str_remove(mechanism, mech_code),
+      mech_name = stringr::str_replace_all(mech_name, "\n", ""),
+      award_number = dplyr::case_when(
+        stringr::str_detect(prime_partner_name, "^TBD") ~ NA_character_,
+        TRUE ~ stringr::str_extract(
+          mech_name,
+          pattern = "(?<=-[:space:])[A-Z0-9]+(?=[:space:]-[:space:])"
+        )
+      ),
+      mech_name = dplyr::case_when(
+        !is.na(award_number) ~ stringr::str_remove(mech_name, award_number),
+        TRUE ~ mech_name
+      ),
+      mech_name = stringr::str_remove(
+        mech_name,
+        paste0("^", rev(sep_chrs), collapse = "|")
+      )
+    ) %>%
+    dplyr::select(uid, mech_code, mech_name, award_number, mechanism, everything())
 }

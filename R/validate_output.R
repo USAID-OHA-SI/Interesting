@@ -6,7 +6,7 @@
 #'
 #' @export
 
-validate_output <- function(df, output_path, content=FALSE, datim_path=NULL){
+validate_output <- function(df, content=FALSE, datim_path=NULL){
 
   # Extract Meta Info
   subm_file <- df %>%
@@ -39,19 +39,14 @@ validate_output <- function(df, output_path, content=FALSE, datim_path=NULL){
   curr_dt <- glamr::curr_date()
 
   pd_post <- glamr::pepfar_data_calendar %>%
-    mutate(pd = paste0("FY", str_sub(fiscal_year, 3,4),
-                       "Q", quarter)) %>%
+    mutate(pd = paste0("FY", str_sub(fiscal_year, 3,4), "Q", quarter)) %>%
     filter(entry_close <= curr_dt) %>%
     pull(pd) %>%
     has_element(subm_pds)
 
-
   org_miss <- df %>% get_missing("orgunituid")
-
   mech_miss <- df %>% get_missing("mech_code")
-
   ind_miss <- df %>% get_missing("indicator")
-
   nd_miss <- df %>% get_missing("numeratordenom")
 
   # Validations
@@ -59,12 +54,17 @@ validate_output <- function(df, output_path, content=FALSE, datim_path=NULL){
     filename = subm_file,
     sheet = subm_sheet,
     period = paste0(subm_pds, collapse = ", "),
-    ou_missing = paste0(ou_miss, collapse = ", "),
     pd_missing = paste0(pd_miss, collapse = ", "),
+    ou_missing = paste0(ou_miss, collapse = ", "),
+    ou_valid = NA,
     org_missing = paste0(org_miss, collapse = ", "),
+    org_valid = NA,
     mech_missing = paste0(mech_miss, collapse = ", "),
+    mech_valid = NA,
     ind_missing = paste0(ind_miss, collapse = ", "),
-    nd_missing = paste0(nd_miss, collapse = ", ")
+    ind_valid = NA,
+    nd_missing = paste0(nd_miss, collapse = ", "),
+    nd_valid = NA
   )
 
   if (interactive()) {
@@ -83,11 +83,11 @@ validate_output <- function(df, output_path, content=FALSE, datim_path=NULL){
   }
 
   #check_output_cols(df) # NOTE - Looks like a repetition
-  #check_operatingunit(df)
-  #check_orgunituids(df)
-  #check_mechs(df)
-  #check_inds(df)
-  #check_disaggs(df)
+  ou_valid <- check_operatingunit(df)
+  org_valid <- check_orgunituids(df)
+  mech_valid <- check_mechs(df)
+  ind_valid <- check_inds(df)
+  disagg_valid <- check_disaggs(df)
 
   #check_content(df)
 
@@ -152,38 +152,42 @@ check_operatingunit <- function(df, ou) {
 }
 
 
-#' Validate orgunituids for export
+#' Validate orgunituids
 #'
-#' @param df HFR data framed created by `cir_process_template()`
+#' @param df HFR data frame containing reshaped submission
 #' @param ref_orgs Datim OU Orgunits Reference Data as data frame
+#'
+#' @export
+#' @return list of row ids with invalid orgunituid
 
 check_orgunituids <- function(df, ref_orgs){
 
-  cntries <- df %>%
-    dplyr::filter(!is.na(operatingunit)) %>%
-    dplyr::distinct(operatingunit) %>%
-    dplyr::pull()
+  df %>%
+    dplyr::filter(!is.na(orgunituid)) %>%
+    dplyr::left_join(ref_orgs, by = "orgunituid") %>%
+    dplyr::filter(is.na(orgunit_level)) %>%
+    dplyr::distinct(row_id) %>%
+    dplyr::pull(row_id)
 
-  return(cntries)
 }
 
 
-#' Validate mechanisms for export
+#' Validate Implementing Mechanisms for export
 #'
-#' @param df HFR data framed created by `cir_process_template()`
+#' @param df HFR data frame containing reshaped submission
+#' @param ref_mechs Datim OU Mechanisms Reference Data as data frame
+#'
+#' @export
+#' @return list of row ids with invalid mechanism code
 
-check_mechs <-function(df){
+check_mechs <- function(df, ref_mechs){
 
-  #missing mechanisms?
-  missing_mechs <- count_missing(df, mech_code)
-
-  #mechanisms
-  mech_list <- unique(df$mech_code) %>% sort() %>% paste(collapse = ", ") %>% crayon::blue()
-
-  #print validation
-  cat("\nAre there any missing mech_codes?", missing_mechs,
-      "\nWhat mechanism are included?", mech_list,
-      "\n")
+  df %>%
+    dplyr::filter(!is.na(mech_code)) %>%
+    dplyr::left_join(ref_mechs, by = "mech_code") %>%
+    dplyr::filter(is.na(mech_name)) %>%
+    dplyr::distinct(row_id) %>%
+    dplyr::pull(row_id)
 }
 
 
