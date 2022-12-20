@@ -241,6 +241,15 @@
   df_trans %>%
     check_mechs(ref_mechs = df_mechs)
 
+  df_trans %>%
+    check_inds(ref_de = data_elements)
+
+  df_trans %>%
+    check_numdenom()
+
+  df_trans %>%
+    check_disaggs(ref_de = data_elements)
+
 
 
 

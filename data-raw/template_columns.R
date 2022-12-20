@@ -1,6 +1,7 @@
 #Template Columns ------------------------------
 
  #store column names for long template
+
   template_cols_long <- readxl::read_excel("data-raw/templates/FY22_CIRG_Submission_Long_All_Technical_Areas.xlsx",
                                            sheet = "CIRG", col_types = "text", n_max = 0) %>%
     names()
@@ -9,8 +10,8 @@
 
 
  #store column names for semi_wide template
+
   template_cols_semiwide <- readxl::excel_sheets("data-raw/templates/FY22_CIRG_Submission_Semi_Wide_ All_Technical_Areas.xlsx") %>%
-    #setdiff("meta") %>%
     stringr::str_subset("CIRG") %>%
     purrr::map_dfr(.f = ~ readxl::read_excel("data-raw/templates/FY22_CIRG_Submission_Semi_Wide_ All_Technical_Areas.xlsx", sheet = .x, skip = 2, col_types = "text")) %>%
     names()
@@ -41,8 +42,6 @@
     unlist()
 
   tab_type <- tab_type %>% stringr::str_extract("[^.]+")
-
-
 
   #loop
 
@@ -140,3 +139,29 @@
                   numerator_denominator)
 
   usethis::use_data(template_metadata, overwrite = TRUE)
+
+  # Store template Data Elements
+
+  data_elements <- list.files(
+    path = "./data-raw/templates/",
+    pattern = "^FY\\d{2}.*Indicator Combinations.*",
+    full.names = TRUE) %>%
+    readxl::read_excel(path = ., sheet = 1, col_types = "text") %>%
+    dplyr::select(1:9) %>%
+    dplyr::rename_with(
+      .cols = everything(),
+      .fn = ~stringr::str_remove(., "...\\d")) %>%
+    dplyr::rename_with(
+      .cols = everything(),
+      .fn = ~ stringr::str_remove(., "\\(use in reporting\\)")) %>%
+    janitor::clean_names() %>%
+    dplyr::mutate(
+      numeratordenom = stringr::str_sub(numerator_denominator, 1)) %>%
+    dplyr::select(
+      tech_area, field_marking = required_optional,
+      indicator, disaggregate_group, age, sex,
+      otherdisaggregate = other_disagg,
+      otherdisaggregate_sub = population,
+      numeratordenom = numerator_denominator)
+
+  usethis::use_data(data_elements, overwrite = TRUE)
