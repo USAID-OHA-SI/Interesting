@@ -170,10 +170,6 @@
   df_trans %>% distinct(otherdisaggregate)
   df_trans %>% distinct(otherdisaggregate_sub)
 
-  # Import, Validations & Transformations
-  df_subm <- subm %>%
-    dplyr::first() %>%
-    cir_processing()
 
   # Validate outputs -- Missing
 
@@ -219,11 +215,50 @@
       cntry = .x,
       base_url = "https://datim.org"))
 
+  "Ghana" %>%
+    purrr::map_dfr(~datim_orgunits(
+      username = glamr::datim_user(),
+      password = glamr::datim_pwd(),
+      cntry = .x,
+      base_url = "https://datim.org"))
+
+  df_orgs %>% glimpse()
+
+  df_trans %>% glimpse()
+
   df_trans %>%
-    check_orgunituids()
+    check_orgunituids(ref_orgs = df_orgs)
+
+  df_mechs <- meta$ou %>%
+    purrr::map_dfr(~datim_mechs(
+      username = glamr::datim_user(),
+      password = glamr::datim_pwd(),
+      cntry = .x,
+      base_url = "https://datim.org"))
+
+  df_mechs %>% glimpse()
+
+  df_trans %>%
+    check_mechs(ref_mechs = df_mechs)
+
+  df_trans %>%
+    check_inds(ref_de = data_elements)
+
+  df_trans %>%
+    check_numdenom()
+
+  df_trans %>%
+    check_disaggs(ref_de = data_elements)
 
 
 
+
+
+
+  # Import, Import Validations, Transformations, Content Validation
+  df_subm <- subm %>%
+    dplyr::first() %>%
+    cir_processing()
 
 
 

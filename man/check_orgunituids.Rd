@@ -2,15 +2,18 @@
 % Please edit documentation in R/validate_output.R
 \name{check_orgunituids}
 \alias{check_orgunituids}
-\title{Validate orgunituids for export}
+\title{Validate orgunituids}
 \usage{
 check_orgunituids(df, ref_orgs)
 }
 \arguments{
-\item{df}{HFR data framed created by \code{cir_process_template()}}
+\item{df}{HFR data frame containing reshaped submission}
 
 \item{ref_orgs}{Datim OU Orgunits Reference Data as data frame}
 }
+\value{
+list of row ids with invalid orgunituid
+}
 \description{
-Validate orgunituids for export
+Validate orgunituids
 }

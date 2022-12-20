@@ -2,13 +2,18 @@
 % Please edit documentation in R/validate_output.R
 \name{check_mechs}
 \alias{check_mechs}
-\title{Validate mechanisms for export}
+\title{Validate Implementing Mechanisms for export}
 \usage{
-check_mechs(df)
+check_mechs(df, ref_mechs)
 }
 \arguments{
-\item{df}{HFR data framed created by \code{cir_process_template()}}
+\item{df}{HFR data frame containing reshaped submission}
+
+\item{ref_mechs}{Datim OU Mechanisms Reference Data as data frame}
+}
+\value{
+list of row ids with invalid mechanism code
 }
 \description{
-Validate mechanisms for export
+Validate Implementing Mechanisms for export
 }

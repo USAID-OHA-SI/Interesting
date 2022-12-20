@@ -6,7 +6,9 @@
 #'
 #' @export
 
-validate_output <- function(df, output_path, content=FALSE, datim_path=NULL){
+validate_output <- function(df, refs,
+                            content=FALSE,
+                            refs_path=NULL){
 
   # Extract Meta Info
   subm_file <- df %>%
@@ -39,19 +41,14 @@ validate_output <- function(df, output_path, content=FALSE, datim_path=NULL){
   curr_dt <- glamr::curr_date()
 
   pd_post <- glamr::pepfar_data_calendar %>%
-    mutate(pd = paste0("FY", str_sub(fiscal_year, 3,4),
-                       "Q", quarter)) %>%
+    mutate(pd = paste0("FY", str_sub(fiscal_year, 3,4), "Q", quarter)) %>%
     filter(entry_close <= curr_dt) %>%
     pull(pd) %>%
     has_element(subm_pds)
 
-
   org_miss <- df %>% get_missing("orgunituid")
-
   mech_miss <- df %>% get_missing("mech_code")
-
   ind_miss <- df %>% get_missing("indicator")
-
   nd_miss <- df %>% get_missing("numeratordenom")
 
   # Validations
@@ -59,12 +56,19 @@ validate_output <- function(df, output_path, content=FALSE, datim_path=NULL){
     filename = subm_file,
     sheet = subm_sheet,
     period = paste0(subm_pds, collapse = ", "),
-    ou_missing = paste0(ou_miss, collapse = ", "),
     pd_missing = paste0(pd_miss, collapse = ", "),
+    pd_valid = paste0(pd_fmt, collapse = ", "),
+    ou_missing = paste0(ou_miss, collapse = ", "),
+    ou_valid = NA,
     org_missing = paste0(org_miss, collapse = ", "),
+    org_valid = NA,
     mech_missing = paste0(mech_miss, collapse = ", "),
+    mech_valid = NA,
     ind_missing = paste0(ind_miss, collapse = ", "),
-    nd_missing = paste0(nd_miss, collapse = ", ")
+    ind_valid = NA,
+    nd_missing = paste0(nd_miss, collapse = ", "),
+    nd_valid = NA,
+    disagg_valid = NA
   )
 
   if (interactive()) {
@@ -83,11 +87,43 @@ validate_output <- function(df, output_path, content=FALSE, datim_path=NULL){
   }
 
   #check_output_cols(df) # NOTE - Looks like a repetition
-  #check_operatingunit(df)
-  #check_orgunituids(df)
-  #check_mechs(df)
-  #check_inds(df)
-  #check_disaggs(df)
+  ou_valid <- check_operatingunit(df)
+
+  vout$ou_valid <- paste0(ou_valid, collapse = ", ")
+
+  org_valid <- check_orgunituids(df, ref_orgs = refs$orgs)
+
+  vout$org_valid <- paste0(org_valid, collapse = ", ")
+
+  mech_valid <- check_mechs(df, ref_mechs = refs$mechs)
+
+  vout$mech_valid <- paste0(mech_valid, collapse = ", ")
+
+  ind_valid <- check_inds(df, ref_de = refs$de)
+
+  vout$ind_valid <- paste0(ind_valid, collapse = ", ")
+
+  disagg_valid <- check_disaggs(df, ref_de = refs$de)
+
+  vout$disagg_valid <- paste0(disagg_valid, collapse = ", ")
+
+  nd_valid <- check_numdenom(df)
+
+  vout$na_valid <- paste0(nd_valid, collapse = ", ")
+
+  # Notification
+
+  if (interactive()) {
+    cat("\n",
+        "\nOperaringunit: ", vout$ou_valid,
+        "\nReporting Period: ", vout$pd_valid,
+        "\nOrgunit: ", vout$org_valid,
+        "\nMechanisms: ", vout$mech_valid,
+        "\nIndicator: ", vout$ind_valid,
+        "\nNum/Denominator: ", vout$nd_valid,
+        "\nNum/Denominator: ", vout$diagg_valid,
+        "\n")
+  }
 
   #check_content(df)
 
@@ -96,7 +132,10 @@ validate_output <- function(df, output_path, content=FALSE, datim_path=NULL){
   #   df <- check_content(df, output_path, datim_path)
   # }
 
-  return(df)
+  return(list(
+    vout = vout,
+    data = df
+  ))
 }
 
 
@@ -152,93 +191,108 @@ check_operatingunit <- function(df, ou) {
 }
 
 
-#' Validate orgunituids for export
+#' Validate orgunituids
 #'
-#' @param df HFR data framed created by `cir_process_template()`
+#' @param df HFR data frame containing reshaped submission
 #' @param ref_orgs Datim OU Orgunits Reference Data as data frame
+#'
+#' @export
+#' @return list of row ids with invalid orgunituid
 
 check_orgunituids <- function(df, ref_orgs){
 
-  cntries <- df %>%
-    dplyr::filter(!is.na(operatingunit)) %>%
-    dplyr::distinct(operatingunit) %>%
-    dplyr::pull()
+  df %>%
+    dplyr::filter(!is.na(orgunituid)) %>%
+    dplyr::left_join(ref_orgs, by = "orgunituid") %>%
+    dplyr::filter(is.na(orgunit_level)) %>%
+    dplyr::distinct(row_id) %>%
+    dplyr::pull(row_id)
 
-  return(cntries)
 }
 
 
-#' Validate mechanisms for export
+#' Validate Implementing Mechanisms for export
 #'
-#' @param df HFR data framed created by `cir_process_template()`
+#' @param df        HFR data frame containing reshaped submission
+#' @param ref_mechs Datim OU Mechanisms Reference Data as data frame
+#'
+#' @export
+#' @return list of row ids with invalid mechanism code
 
-check_mechs <-function(df){
+check_mechs <- function(df, ref_mechs){
 
-  #missing mechanisms?
-  missing_mechs <- count_missing(df, mech_code)
-
-  #mechanisms
-  mech_list <- unique(df$mech_code) %>% sort() %>% paste(collapse = ", ") %>% crayon::blue()
-
-  #print validation
-  cat("\nAre there any missing mech_codes?", missing_mechs,
-      "\nWhat mechanism are included?", mech_list,
-      "\n")
+  df %>%
+    dplyr::filter(!is.na(mech_code)) %>%
+    dplyr::left_join(ref_mechs, by = "mech_code") %>%
+    dplyr::filter(is.na(mech_name)) %>%
+    dplyr::distinct(row_id) %>%
+    dplyr::pull(row_id)
 }
 
 
 #' Validate indicators for export
 #'
-#' @param df HFR data framed created by ``cir_process_template()``
+#' @param df     HFR data frame containing reshaped submission
+#' @param ref_de CIR Data Element Reference Data as data frame
+#'
+#' @export
+#' @return list of row ids with invalid indicators
 
-check_inds <-function(df){
+check_inds <- function(df, ref_de){
 
-  missing_ind <- count_missing(df, indicator)
+  df %>%
+    dplyr::filter(!is.na(indicator)) %>%
+    dplyr::left_join(
+      ref_de[, c("indicator", "field_marking")], by = "indicator") %>%
+    dplyr::filter(is.na(field_marking)) %>%
+    dplyr::distinct(row_id) %>%
+    dplyr::pull(row_id)
+}
 
-  #indicators
-  req <- df %>%
+#' Validate Numerator/Denominator for export
+#'
+#' @param df     HFR data frame containing reshaped submission
+#'
+#' @export
+#' @return list of row ids with invalid numerator/denominator values
 
+check_numdenom <- function(df){
 
-  submitted <- unique(df$indicator)
+  df %>%
+    dplyr::filter(!is.na(numeratordenom)) %>%
+    dplyr::rowwise() %>%
+    dplyr::mutate(
+      nd_valid = !numeratordenom %in% c("N", "Numerator", "D", "Denominator")
+    ) %>%
+    dplyr::ungroup() %>%
+    dplyr::filter(!nd_valid) %>%
+    dplyr::distinct(row_id) %>%
+    dplyr::pull(row_id)
 
-  missing <- flag_missing(req, sumbitted)
-  extra <- flag_extra(req, sumbitted)
-
-
-  #print validation
-  cat("\nAre there any unspecified indicators?", missing_ind,
-      "\nAre there any missing indicators?", missing,
-      "\nAre there any extra indicators?", extra)
 }
 
 
 #' Validate disaggs for export
 #'
-#' @param df HFR data framed created by ``cir_process_template()``
+#' @param df     HFR data frame containing reshaped submission
+#' @param ref_de CIR Data Element Reference Data as data frame
+#'
+#' @export
+#' @return list of row ids with invalid indicators' disaggregations
 
-check_disaggs <- function(df){
+check_disaggs <- function(df, ref_de){
 
-  #age/sex
-  req <- c("Female <15", "Female 15+", "Male <15", "Male 15+")
-  submitted <- df %>%
-    dplyr::distinct(ageasentered, sex) %>%
-    tidyr::unite(agesex, c("sex", "agecoarse"), sep = " ") %>%
-    dplyr::pull(agesex)
+  df %>%
+    dplyr::filter(!is.na(indicator)) %>%
+    dplyr::left_join(
+      dplyr::select(ref_de, !c("tech_area", "disaggregate_group")),
+      by = c("indicator", "age", "sex", "otherdisaggregate",
+             "otherdisaggregate_sub", "numeratordenom")
+    ) %>%
+    dplyr::filter(is.na(field_marking)) %>%
+    dplyr::distinct(row_id) %>%
+    dplyr::pull(row_id)
 
-  missing <- flag_missing(req, submitted)
-  extra <- flag_extra(req, submitted)
-
-  #MMD months
-  req_otherdisagg <- c("<3 months", "3-5 months", "6 months or more")
-  sumbitted_otherdisagg <- unique(df$otherdisaggregate) %>% setdiff(NA)
-
-  #extra otherdisaggs
-  extra_otherdisagg <- flag_extra(req_otherdisagg, sumbitted_otherdisagg)
-
-  #print validation
-  cat( "\nAre there any missing age/sex disaggs?", missing,
-       "\nAre there any extra age/sex disaggs?", extra,
-       "\nAre there any extra other disaggs?", extra_otherdisagg, "\n")
 }
 
 

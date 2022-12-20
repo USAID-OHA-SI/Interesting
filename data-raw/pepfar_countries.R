@@ -6,7 +6,7 @@ pepfar_countries <- grabr::get_outable(
 )
 
 pepfar_countries <- pepfar_countries |>
-  dplyr::select(-ends_with(c("_uid", "_iso"))) |>
+  dplyr::select(-ends_with(c("_uid"))) |>
   dplyr::mutate(ou_country = dplyr::case_when(
     operatingunit != country ~ paste0(operatingunit, "/", country),
     TRUE ~ operatingunit

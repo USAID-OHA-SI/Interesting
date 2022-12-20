@@ -17,6 +17,9 @@ datim_sqlviews(
 \arguments{
 \item{password}{}
 }
+\value{
+SQLView uid or dataset as data frame
+}
 \description{
 Query Datim SQLViews
 }
