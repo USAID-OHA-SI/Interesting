@@ -5,12 +5,14 @@
 #'
 #' @export
 #'
-cir_setup <- function(folder = "ou_submissions", dt = NULL) {
+cir_setup <- function(folder = "cirg-submissions", dt = NULL) {
 
   # Date
-  curr_dt <- ifelse(is.null(dt),
-                    base::format(base::Sys.Date(), "%Y-%m-%d"),
-                    dt)
+  curr_dt <- ifelse(
+    is.null(dt),
+    base::format(base::Sys.Date(), "%Y-%m-%d"),
+    dt
+  )
 
   # Processing folder
   if (!base::dir.exists(file.path(".", folder)))
@@ -22,50 +24,24 @@ cir_setup <- function(folder = "ou_submissions", dt = NULL) {
 
   dir_curr_proc %>% base::dir.create()
 
-  # Raw Data
-  dir_curr_proc %>%
-    base::file.path("0-reference") %>%
-    base::dir.create()
+  # Sub-folders
+  df_subfolders <- c("reference",
+    "raw",
+    "metadata",
+    "validations",
+    "processed",
+    "transformed",
+    "cleaned",
+    "final",
+    "archive") %>%
+    tibble::tibble(folder = .) %>%
+    dplyr::mutate(order = row_number() - 1)
 
-  # Raw Data
-  dir_curr_proc %>%
-    base::file.path("1-raw") %>%
-    base::dir.create()
-
-  # Metadata - 1 file per submission
-  dir_curr_proc %>%
-    base::file.path("2-metadata") %>%
-    base::dir.create()
-
-  # Validations - 3 files per submission
-  dir_curr_proc %>%
-    base::file.path("3-validations") %>%
-    base::dir.create()
-
-  # validated sheets data
-  dir_curr_proc %>%
-    base::file.path("4-processed") %>%
-    base::dir.create()
-
-  # transformation sheets data
-  dir_curr_proc %>%
-    base::file.path("5-transformed") %>%
-    base::dir.create()
-
-  # cleaned data
-  dir_curr_proc %>%
-    base::file.path("6-cleaned") %>%
-    base::dir.create()
-
-  # final data
-  dir_curr_proc %>%
-    base::file.path("7-final") %>%
-    base::dir.create()
-
-  # archived
-  dir_curr_proc %>%
-    base::file.path("8-archive") %>%
-    base::dir.create()
+  # Create all sub-folders
+  df_subfolders %>%
+    purrr::pwalk(~base::dir.create(
+      path = base::file.path(".", dir_curr_proc, paste0(.y, "-", .x))
+    ))
 }
 
 
@@ -156,6 +132,32 @@ cir_archive <- function(.subm) {
 
   fs::file_move(path = filepath,
                 new_path = file.path(dir_arch, basename(filepath)))
+}
+
+
+#' @title Get list of visible excel sheets
+#'
+#' @param .subm   Submission file
+#'
+#' @return Worksheet visibility as data frame
+#' @export
+#'
+cir_vsheets <- function(.subm) {
+
+  # Notification
+  if(base::interactive())
+    usethis::ui_info("Checking worksheets visibility for: {.subm}")
+
+  # load file as workbook and check sheets visibility
+  wb <- openxlsx::loadWorkbook(file = .subm)
+
+  .subm %>%
+    openxlsx::getSheetNames() %>%
+    tibble::tibble(filename = base::basename(.subm),
+                   name = .) %>%
+    dplyr::mutate(
+      visibility = openxlsx::sheetVisibility(wb)
+    )
 }
 
 #' Extract Meta Data Information about Template
@@ -567,6 +569,16 @@ null_to_chr <- function(obj) {
 #'
 na_to_chr <- function(obj) {
   ifelse(is.null(obj), "[not available]", obj)
+}
+
+
+#' Return none if vector/list is empty
+#'
+#' @param obj text to be printed
+#' @export
+#'
+empty_to_chr <- function(obj) {
+  ifelse(purrr::is_empty(obj), "None", paste0(obj, collapse = ", "))
 }
 
 

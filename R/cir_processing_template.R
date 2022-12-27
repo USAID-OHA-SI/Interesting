@@ -30,14 +30,8 @@ cir_processing <- function(filepath) {
         "\n")
   }
 
-  # STOP HERE IS SUBMISSION IS NOT VALID
-  if (!vinit$subm_valid)
-    return(vinit$subm_valid)
-
-  #store meta df - come back to google ID
-  # TODO - There are inconsistencies in the output. See `cir_extract_meta`
-  # Alternative - Use `validate_initial()` result and join by `ou`
-  #meta_df <- cir_store_meta(filepath)
+  # STOP HERE IF SUBMISSION IS NOT VALID
+  if (!vinit$subm_valid) return(vinit$subm_valid)
 
   #import template sheet(s) - this is being being built locally right now (can we do this from drive and use the filename to identify)
   #in order for this to work, we need the naming conventions to be consistent
@@ -45,8 +39,6 @@ cir_processing <- function(filepath) {
   df_cirg <- cir_import(filepath, template = vinit$type)
 
   # TODO - Store sheet level validations
-
-  df_vimp <- df_cirg$checks
 
   # Save vimp output to file
   cir_output(.df_out = df_cirg$checks,
@@ -80,10 +72,13 @@ cir_processing <- function(filepath) {
   # df_cirg <- cir_wide_refjoin(df_cirg)
 
   #reshape wide to match long df (only affects wide format)
-  df_cirg <- cir_gather(df_cirg$data)
+  #df_cirg <- cir_gather(df_cirg$data)
 
   #Munge string
-  df_cirg <- cir_munge_string(df_cirg)
+  #df_cirg <- cir_munge_string(df_cirg)
+
+  df_cirg <- cir_reshape(df_cirg$data)
+
 
 
 
@@ -113,7 +108,7 @@ cir_processing <- function(filepath) {
   # TODO - Move file from raw to archive folder when done
   # cir_archive(filepath)
 
-  return(vinit)
+  #return(vinit)
 
   # Save outputs
   # TODO - Save processing logs & data: vinit, vimp, vout and df_cirg

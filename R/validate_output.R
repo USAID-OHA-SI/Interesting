@@ -87,7 +87,7 @@ validate_output <- function(df, refs,
   }
 
   #check_output_cols(df) # NOTE - Looks like a repetition
-  ou_valid <- check_operatingunit(df)
+  ou_valid <- check_operatingunit(df, refs$ou)
 
   vout$ou_valid <- paste0(ou_valid, collapse = ", ")
 
@@ -133,6 +133,7 @@ validate_output <- function(df, refs,
   # }
 
   return(list(
+    status = NA,
     vout = vout,
     data = df
   ))

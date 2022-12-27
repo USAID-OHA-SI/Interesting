@@ -42,7 +42,10 @@ is_cirgtab <- function(filepath){
   if(missing(filepath))
     stop("No filepath provided.")
 
-  shts <- readxl::excel_sheets(filepath)
+  #shts <- readxl::excel_sheets(filepath)
+  shts <- cir_vsheets(filepath) %>%
+    dplyr::filter(visibility == "visible") %>%
+    dplyr::pull(name)
 
   shts_cirg <- shts %>%
     stringr::str_subset("CIRG") %>%
@@ -51,9 +54,8 @@ is_cirgtab <- function(filepath){
   msg <- paste("No CIRG tabs included in file: ", basename(filepath))
 
   # TODO - Make sure to return a boolean: Yes / No
-  if(shts_cirg == 0) {
-    #stop(msg)
-    print(msg)
+  if(shts_cirg == 0 & base::interactive()) {
+    usethis::ui_warn(msg)
   }
 
   shts_cirg > 0
@@ -72,7 +74,10 @@ is_metatab <- function(filepath){
   if(missing(filepath))
     stop("No filepath provided.")
 
-  shts <- readxl::excel_sheets(filepath)
+  #shts <- readxl::excel_sheets(filepath)
+  shts <- cir_vsheets(filepath) %>%
+    dplyr::filter(visibility == "visible") %>%
+    dplyr::pull(name)
 
   # TODO - Make sure to capture all the cases
   "meta" %in% shts
@@ -97,20 +102,8 @@ check_meta <- function(filepath){
 
     has_meta <- TRUE
     meta <- cir_extract_meta(filepath)
-
-    # type <- cir_extract_meta(filepath, "type")
-    # temp_version <- cir_extract_meta(filepath, "version")
-    # reppd_meta <-  cir_extract_meta(filepath, "period")
-    # ou_name <-  cir_extract_meta(filepath, "ou")
   }
   else {
-    # # TODO - Should `cir_import` be checking `is_cirtab`?
-    # df <- cir_import(filepath)
-    #
-    # # TODO - No need to guess, just reset all these variable to [no meta provided]
-    # type <- ifelse(var_exists(df, "val"), "Long [no meta provided]", "Wide [no meta provided]")
-    # temp_version <- "[no meta provided]"
-    # reppd_meta <- "[no period provided]"
 
     meta <- tibble::tibble(
       ou = NA_character_,
@@ -162,22 +155,38 @@ check_tabs <- function(filepath){
     has_cirg <- TRUE
   }
 
-  #tabs
-  tabs <- readxl::excel_sheets(filepath)
+  #worksheets
+
+  #tabs <- readxl::excel_sheets(filepath)
+  tabs <- cir_vsheets(filepath)
+
+  tabs_list <- tabs$name
+
+  tabs_count <- nrow(tabs)
 
   tabs_imported <- tabs %>%
+    dplyr::filter(visibility == "visible") %>%
+    dplyr::pull(name) %>%
     stringr::str_subset("CIRG") %>%
     paste(collapse = ", ")
 
   tabs_excluded <- tabs %>%
+    dplyr::filter(visibility == "visible") %>%
+    dplyr::pull(name) %>%
     stringr::str_subset("CIRG|meta", negate = TRUE) %>%
+    paste(collapse = ", ")
+
+  tabs_hidden <- tabs %>%
+    dplyr::filter(visibility != "visible") %>%
+    dplyr::pull(name) %>%
     paste(collapse = ", ")
 
   cirg <- tibble::tibble(
     has_cirg_sheets = has_cirg,
-    sheets_count = length(tabs),
-    sheets_valid = tabs_imported,
-    sheets_exclude = ifelse(length(tabs_excluded) > 0, tabs_excluded, "None")
+    sheets_count = tabs_count,
+    sheets_valid = ifelse(nchar(tabs_imported) > 0, tabs_imported, "None"),
+    sheets_exclude = ifelse(nchar(tabs_excluded) > 0, tabs_excluded, "None"),
+    sheets_hidden = ifelse(nchar(tabs_hidden) > 0, tabs_hidden, "None"),
   )
 
   #PRINT and/or LOG VALIDATION
@@ -186,9 +195,10 @@ check_tabs <- function(filepath){
     cat("\n---- DATA SHEETS ----",
         "\nHas CIRG Sheets? ", paint_iftrue(cirg$has_cirg_sheets),
         "\nNumber of sheets: ", cirg$sheets_count,
-        "\nAll sheets [valid sheet must be labeled 'CIRG']: ", paint_blue(paste(tabs, collapse = ", ")),
+        "\nAll sheets [valid sheet must be labeled 'CIRG']: ", paint_blue(paste(tabs_list, collapse = ", ")),
         "\nWhat sheets will be imported?", paint_green(cirg$sheets_valid),
         "\nWhat sheets will be excluded?", paint_red(cirg$sheets_exclude),
+        "\nWhat sheets are hidden?", paint_red(cirg$sheets_hidden),
         "\n")
   }
 

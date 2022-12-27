@@ -92,6 +92,14 @@
 
   subms
 
+  # Worksheets Visibility
+  shts <- subms %>%
+    dplyr::first() %>%
+    cir_vsheets()
+
+  shts <- subms %>%
+    map_dfr(cir_vsheets)
+
   # Metadata
   # subms %>%
   #   dplyr::first() %>%
@@ -110,8 +118,8 @@
     dplyr::first() %>%
     validate_initial()
 
-  # metas <- subms %>%
-  #   map_dfr(validate_initial)
+  metas <- subms %>%
+    map_dfr(validate_initial)
 
   # Import & 2nd round of Validation
   df_subm <- subms %>%
@@ -155,20 +163,20 @@
     cir_gather() %>%
     left_join(tmp_meta, by = "indicator_code")
 
-  df_trans <- df_subm$data %>%
-    cir_gather() %>%
-    cir_munge_string()
+  # df_trans <- df_subm$data %>%
+  #   cir_gather() %>%
+  #   cir_munge_string()
 
   df_trans <- df_subm$data %>%
     cir_reshape()
 
   # Template DataElement Pattern
   # <indicator>.<age>.<sex>.<otherdisaggs>.<population>.<numdenom>
-  df_trans %>% distinct(indicator)
-  df_trans %>% distinct(sex)
-  df_trans %>% distinct(ageasentered)
-  df_trans %>% distinct(otherdisaggregate)
-  df_trans %>% distinct(otherdisaggregate_sub)
+  # df_trans %>% distinct(indicator)
+  # df_trans %>% distinct(sex)
+  # df_trans %>% distinct(ageasentered)
+  # df_trans %>% distinct(otherdisaggregate)
+  # df_trans %>% distinct(otherdisaggregate_sub)
 
 
   # Validate outputs -- Missing
@@ -215,13 +223,6 @@
       cntry = .x,
       base_url = "https://datim.org"))
 
-  "Ghana" %>%
-    purrr::map_dfr(~datim_orgunits(
-      username = glamr::datim_user(),
-      password = glamr::datim_pwd(),
-      cntry = .x,
-      base_url = "https://datim.org"))
-
   df_orgs %>% glimpse()
 
   df_trans %>% glimpse()
@@ -248,7 +249,18 @@
     check_numdenom()
 
   df_trans %>%
+    rename(age = ageasentered) %>%
     check_disaggs(ref_de = data_elements)
+
+  refs <- list(
+    ou = meta$ou,
+    org = df_orgs,
+    mech = df_mechs,
+    de = data_elements
+  )
+
+  df_trans %>%
+    validate_output(refs = refs)
 
 
 

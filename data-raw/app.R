@@ -23,7 +23,7 @@ library(glue)
 
   cirg_ui <- fluidPage(
 
-    # Navigation Bar & Pages
+    # Navigation Bar & Pages ----
     navbarPage(
       id = "mainMenu",
       fluid = TRUE,
@@ -296,7 +296,7 @@ library(glue)
           pull(datapath) %>%
           map_dfr(function(.file){
 
-            meta <- validate_initial(filepath = .file)
+            meta <- Interesting::validate_initial(filepath = .file)
 
             return(meta)
           })
