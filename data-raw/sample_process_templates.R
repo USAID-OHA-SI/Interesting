@@ -103,6 +103,14 @@
   # Metadata
 
   # Initial Validation
+  a <- subms %>%
+    dplyr::first() %>%
+    cir_extract_meta()
+
+  subms %>%
+    dplyr::first() %>%
+    check_meta()
+
   meta <- subms %>%
     dplyr::first() %>%
     validate_initial()

@@ -646,6 +646,20 @@ paint_ifna <- function(txt,
   ifelse(base::is.na(txt), true_paint(txt), false_paint(txt))
 }
 
+#' Paint if empty
+#'
+#' @param txt text to be painted and printed
+#' @param true_paint crayon function to execute if ~is_empty(txt) or txt == ""
+#' @param false_patin crayon function to execute
+#' @export
+#'
+paint_ifempty <- function(txt,
+                          true_paint = crayon::blue,
+                          false_paint = crayon::yellow) {
+
+  ifelse(toString(txt) == "", true_paint("None"), false_paint(txt))
+}
+
 #' Paint if null
 #'
 #' @param obj text to be painted and printed

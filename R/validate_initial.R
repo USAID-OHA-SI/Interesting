@@ -116,7 +116,7 @@ check_meta <- function(filepath){
   }
 
   # Check period validity
-  rep_pd <- stringr::str_remove_all(meta[mtype == "period", "mvalue"], " ")
+  rep_pd <- stringr::str_remove_all(meta[meta$mtype == "period", "mvalue"], " ")
 
   curr_dt <- glamr::curr_date()
 
@@ -128,12 +128,12 @@ check_meta <- function(filepath){
     purrr::has_element(rep_pd)
 
   # Check Country
-  rep_ou <- meta[mtype == "ou", "mvalue"]
+  rep_ou <- meta[meta$mtype == "ou", "mvalue"]
 
   ou_valid <- rep_ou %in% pepfar_countries$operatingunit | rep_ou %in% pepfar_countries$ou_country
 
   # Check template
-  temp_valid <- meta[mtype == "type", "mvalue"] %in% names(templates)
+  temp_valid <- meta[meta$mtype == "type", "mvalue"] %in% names(templates)
 
   # Reshape metadata
   meta <- meta %>%
@@ -149,15 +149,18 @@ check_meta <- function(filepath){
 
   if (interactive()) {
 
-    cat("\n--- METADATA ----",
-        "\nFilename:", crayon::blue(meta$filename),
-        "\nHas meta sheet?", paint_iftrue(meta$has_meta),
-        "\nHas valid metadata?", paint_iftrue(meta$has_valid_meta),
-        "\nOU/Country:", paint_ifna(meta$ou),
-        "\nWhat template was submitted?", crayon::blue(paste(meta$type, meta$version)),
-        "\nWhat reporting period?", paint_ifna(meta$period),
-        "\n")
+    usethis::ui_info("--- METADATA ----")
 
+    cat("\nFilename:", crayon::blue(meta$filename),
+        "\nHas metadata sheet?", paint_iftrue(meta$has_meta),
+        "\nOU/Country:", paint_ifna(meta$ou),
+        "\nIs OU/Country valid:", paint_iftrue(meta$has_valid_ou),
+        "\nReporting period:", paint_ifna(meta$period),
+        "\nIs Rep. period valid?", paint_iftrue(meta$has_valid_period),
+        "\nSubmission template:", crayon::blue(paste(meta$type, meta$version)),
+        "\nIs template valid?", paint_iftrue(meta$has_valid_template),
+        "\nIs metadata valid?", paint_iftrue(meta$has_valid_meta),
+        "\n")
   }
 
   return(meta)
@@ -214,13 +217,14 @@ check_tabs <- function(filepath){
   #PRINT and/or LOG VALIDATION
 
   if (interactive()) {
-    cat("\n---- DATA SHEETS ----",
-        "\nHas CIRG Sheets? ", paint_iftrue(cirg$has_cirg_sheets),
+    usethis::ui_info("---- DATA SHEETS ----")
+
+    cat("\nHas CIRG Sheets? ", paint_iftrue(cirg$has_cirg_sheets),
         "\nNumber of sheets: ", cirg$sheets_count,
         "\nAll sheets [valid sheet must be labeled 'CIRG']: ", paint_blue(paste(tabs_list, collapse = ", ")),
         "\nWhat sheets will be imported?", paint_green(cirg$sheets_valid),
-        "\nWhat sheets will be excluded?", paint_red(cirg$sheets_exclude),
-        "\nWhat sheets are hidden?", paint_red(cirg$sheets_hidden),
+        "\nWhat sheets will be excluded?", paint_ifempty(cirg$sheets_exclude),
+        "\nWhat sheets are hidden?", paint_ifempty(cirg$sheets_hidden),
         "\n")
   }
 
