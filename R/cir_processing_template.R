@@ -1,18 +1,32 @@
 #' Process CIR Submissions
 #'
-#' @param filepath Full filename
+#' @param filepath   Full path of filename
+#' @param archive    Should the file be archived if successfully processed? Default is false
+#' @param vcontent   Should the content of submission be validated?
+#' @param datim_user Datim username
+#' @param datim_pass Datim password
+#' @param base_url   Datim API Base URL
 #'
 #' @export
 #' @return CIR Submission as Tibble
 
-cir_processing <- function(filepath) {
+cir_processing <- function(filepath,
+                           archive = FALSE,
+                           vcontent = FALSE,
+                           datim_user = NULL,
+                           datim_pass = NULL,
+                           base_url = NULL) {
 
   # TODO - run template column storing from Interesting/data-raw/template_columns.R
 
   # TODO - Setup processing folder structure
   # Note - This folder should be excluded from commit
 
-  # TODO - Identify & download submissions
+  # Get user creds for content validation
+  if (vcontent & (is.null(datim_user) | is.null(datim_pass))) {
+    user <- glamr::datim_user()
+    pass <- glamr::datim_pwd()
+  }
 
   # Initial validation checks
   vinit <- validate_initial(filepath)
@@ -23,29 +37,16 @@ cir_processing <- function(filepath) {
              .name = "metadata",
              type = "metadata")
 
-  # Notification
-  if (interactive()) {
-    cat("\n---- STATUS ----",
-        "\nIs submission valid? ", paint_iftrue(vinit$subm_valid),
-        "\n")
-  }
-
-  # STOP HERE IS SUBMISSION IS NOT VALID
-  if (!vinit$subm_valid) return(vinit)
-
-  #store meta df - come back to google ID
-  # TODO - There are inconsistencies in the output. See `cir_extract_meta`
-  # Alternative - Use `validate_initial()` result and join by `ou`
-  #meta_df <- cir_store_meta(filepath)
+  # STOP HERE IF SUBMISSION IS NOT VALID
+  if (!vinit$subm_valid) return(vinit$subm_valid)
 
   #import template sheet(s) - this is being being built locally right now (can we do this from drive and use the filename to identify)
   #in order for this to work, we need the naming conventions to be consistent
+  #validation checks - VMMC does not work on this one because of the names issue - come back to that!
   # TODO - Pass valid cirg sheets to cir_import. No need to use `excel_sheets()`
   df_cirg <- cir_import(filepath, template = vinit$type)
 
   # TODO - Store sheet level validations
-
-  df_vimp <- df_cirg$checks
 
   # Save vimp output to file
   cir_output(.df_out = df_cirg$checks,
@@ -53,31 +54,14 @@ cir_processing <- function(filepath) {
              .name = "import validations",
              type = "validations")
 
-  # Save data output to file
+  # Save imported data to file
   cir_output(.df_out = df_cirg$data,
              .subm = filepath,
              .name = "processed",
              type = "processed")
 
-  #validation checks - VMMC does not work on this one because of the names issue - come back to that!
-  # TODO - This validation needs to be done at the tab level given the differences in wide templates
-  # ACTION - Do the validation within the import
-  # ACTION - Do the validation against the specified template type
-  # ACTION - What's the fall back for when data structure does meet the template?
-  #vimp <- validate_import(df_data)
-
-  #remove any extra columns
-  # TODO - Same as above. This needs to be moved in `cir_import()`
-  #df_cirg <- cir_restrict_cols(df_cirg)
-
-  #join to reference table - need to update with the new reference table from Nashiva
-  # df_cirg <- cir_wide_refjoin(df_cirg)
-
-  #reshape wide to match long df (only affects wide format)
-  df_cirg <- cir_gather(df_cirg$data)
-
-  #Munge string
-  df_cirg <- cir_munge_string(df_cirg)
+  # Transformed processed data
+  df_cirg <- cir_reshape(df_cirg$data)
 
   # Save transformed data output to file
   cir_output(.df_out = df_cirg,
@@ -85,28 +69,73 @@ cir_processing <- function(filepath) {
              .name = "transformed",
              type = "transformed")
 
-
-  # NOTE - See notes in meta_df section
-  #df_cirg <- cir_join_meta(df_cirg, df_meta = meta_df)
-  df_cirg <- df_cirg %>%
-    dplyr::left_join(vinit, by = c("operatingunit" = "ou"))
-
   # Validate output
   # TODO - Return data along with output validations list(checks = vout, data = df_cirg)
-  df_cirg <- validate_output(df_cirg)
+  refs <- list(
+    ou = vinit$ou,
+    pd = vinit$period
+  )
 
-  #df_vout <- df_cirg$checks
+  # Get OU's Orgs & Mechs reference datasets for validate output
+  # TODO: Try to leverage the local storage for speed - extract once, store and re-use if needed
+  if (vcontent) {
 
-  # Save transformed data output to file
-  # cir_output(.df_out = df_cirg$checks,
-  #            .subm = filepath,
-  #            .name = "output validations",
-  #            type = "validations")
+    refs$de <- data_elements
 
-  # TODO - Move file from raw to archive folder when done
-  # cir_archive(filepath)
+    refs$orgs <- datim_orgunits(username = user,
+                                password = pass,
+                                cntry = vinit$ou,
+                                base_url = base_url)
 
-  return(vinit)
+    refs$mechs <- datim_mechs(username = user,
+                              password = pass,
+                              cntry = vinit$ou,
+                              base_url = base_url)
+  }
+
+  # Validate output dataset
+  df_cirg <- validate_output(df_cirg, refs, content = vcontent)
+
+  #usethis::ui_info("Output validations - {df_cirg$status} - {df_cirg$message}")
+
+  #Save output validations to file
+  cir_output(.df_out = df_cirg$checks,
+             .subm = filepath,
+             .name = "output validations",
+             type = "validations")
+
+  #Save cleaned output data to file
+  df_cirg$checks <- df_cirg$checks %>%
+    tidyr::pivot_longer(cols = !c(filename, sheet),
+                        names_to = "validations",
+                        values_to = "location") %>%
+    dplyr::filter(!is.na(location) & location != "")
+
+  if (nrow(df_cirg$checks) > 0) {
+    df_cirg$data <- df_cirg$checks %>%
+      tidyr::separate_rows(location, sep = ", ") %>%
+      dplyr::filter(!is.na(location)) %>%
+      dplyr::mutate(location = as.double(location)) %>%
+      dplyr::left_join(
+        df_cirg$data, .,
+        by = c("filename", "sheet", "row_id" = "location")) %>%
+      dplyr::filter(is.na(validations)) %>%
+      dplyr::select(-validations)
+  }
+
+  #Save cleaned output data to file
+  cir_output(.df_out = df_cirg$data,
+             .subm = filepath,
+             .name = "cleaned",
+             type = "cleaned")
+
+  # Move file from raw to archive folder when done
+  if(archive) {
+    cir_archive(filepath)
+  }
+
+  # return cleaned data only
+  return(df_cirg$data)
 }
 
 

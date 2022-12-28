@@ -4,14 +4,17 @@
 \alias{validate_output}
 \title{Validation Checks}
 \usage{
-validate_output(df, output_path, content = FALSE, datim_path = NULL)
+validate_output(df, refs, content = FALSE)
 }
 \arguments{
 \item{df}{HFR data framed created by \code{cir_process_template()}}
 
-\item{content}{check full dataset}
+\item{refs}{Reference datasets to include orgs, mechs, and data elements}
 
-\item{datim_path}{path to look up files}
+\item{content}{check full dataset}
+}
+\value{
+list containing validated data along with results of the checks
 }
 \description{
 Validation Checks

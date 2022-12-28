@@ -4,10 +4,12 @@
 \alias{cir_processing}
 \title{Process CIR Submissions}
 \usage{
-cir_processing(filepath)
+cir_processing(filepath, archive = FALSE)
 }
 \arguments{
-\item{filepath}{Full filename}
+\item{filepath}{Full path of filename}
+
+\item{archive}{Should the file be archvied if successfully processed? Default is false}
 }
 \value{
 CIR Submission as Tibble

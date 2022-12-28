@@ -1,30 +1,19 @@
-<<<<<<< HEAD
-#Template Columns
 
-#store column names for long template
-template_cols_long <- readxl::read_excel("data-raw/templates/FY22_CIRG_Submission_Long_All_Technical_Areas.xlsx",
-                                         sheet = "CIRG", col_types = "text", n_max = 0) %>%
-  names()
+# Template Types
 
-usethis::use_data(template_cols_long, overwrite = TRUE)
+  templates <- list(
+    "Wide" = c("0.01", "1.00", "2.01"),
+    "Semi-wide" = c("0.01", "1.00", "2.01"),
+    "Long" = c("0.01", "1.00", "2.01")
+  )
 
-#store column names for semi_wide template
-  # template_cols_long <- readxl::read_excel("data-raw/templates/FY22_CIRG_Submission_Long_All_Technical_Areas.xlsx",
-  #                                          sheet = "CIRG", col_types = "text", n_max = 0) %>%
-  #   names()
-  #
-  #
-  # semiwide_sheet <- readxl::excel_sheets("data-raw/templates/FY22_CIRG_Submission_Semi_Wide_ All_Technical_Areas.xlsx")[2:9]
-  #
-  # semiwide_df <- lapply(semiwide_sheet, readxl::read_excel, path = "data-raw/templates/FY22_CIRG_Submission_Semi_Wide_ All_Technical_Areas.xlsx", col_types = "text", n_max = 0)
-  #
-  # lapply(semiwide_df, names)
-  #
-  # usethis::use_data(template_cols_long, overwrite = TRUE)
-=======
+  usethis::use_data(templates, overwrite = TRUE)
+
+
 #Template Columns ------------------------------
 
  #store column names for long template
+
   template_cols_long <- readxl::read_excel("data-raw/templates/FY22_CIRG_Submission_Long_All_Technical_Areas.xlsx",
                                            sheet = "CIRG", col_types = "text", n_max = 0) %>%
     names()
@@ -33,8 +22,8 @@ usethis::use_data(template_cols_long, overwrite = TRUE)
 
 
  #store column names for semi_wide template
+
   template_cols_semiwide <- readxl::excel_sheets("data-raw/templates/FY22_CIRG_Submission_Semi_Wide_ All_Technical_Areas.xlsx") %>%
-    #setdiff("meta") %>%
     stringr::str_subset("CIRG") %>%
     purrr::map_dfr(.f = ~ readxl::read_excel("data-raw/templates/FY22_CIRG_Submission_Semi_Wide_ All_Technical_Areas.xlsx", sheet = .x, skip = 2, col_types = "text")) %>%
     names()
@@ -47,6 +36,11 @@ usethis::use_data(template_cols_long, overwrite = TRUE)
 
   files <- dir({template_path}, pattern = "*.xlsx", full.names = TRUE)
 
+  template_wide_techareas <- files %>%
+    basename() %>%
+    stringr::str_extract("(?<=Wide -).*(?=.xlsx)") %>%
+    stringr::str_trim(side = "both")
+
   df_tabs <- map_dfr(files,
                      ~ tibble(filename = .x,
                               tabname = map(filename, readxl::excel_sheets)) %>%
@@ -54,11 +48,12 @@ usethis::use_data(template_cols_long, overwrite = TRUE)
     filter(tabname != "meta")
 
   #type of template
-  tab_type <- purrr::map(.x = files, ~tail(strsplit(.x,split=" ")[[1]],1)) %>%
+  tab_type <- purrr::map(
+    .x = files,
+    ~tail(strsplit(.x, split=" ")[[1]], 1)) %>%
     unlist()
 
   tab_type <- tab_type %>% stringr::str_extract("[^.]+")
-
 
   #loop
 
@@ -72,7 +67,6 @@ usethis::use_data(template_cols_long, overwrite = TRUE)
     lst2[[i]] <-  lst[[i]] %>%
       pmap_dfr(.f = ~readxl::read_excel(..1, ..2)) %>%
       names()
-
   }
 
   #can I use glue?
@@ -88,6 +82,35 @@ usethis::use_data(template_cols_long, overwrite = TRUE)
   template_wide_sch <- lst2[[7]]
   template_wide_vmmc <- lst2[[8]]
 
+  template_cols_wide <- c(
+    template_wide_dreams,
+    template_wide_gender,
+    template_wide_kp,
+    template_wide_lab,
+    template_wide_ovc,
+    template_wide_prep,
+    template_wide_sch,
+    template_wide_vmmc
+  ) %>%
+    unique()
+
+  template_cols_wgroups <- list(
+    "dreams" = template_wide_dreams,
+    "gender" = template_wide_gender,
+    "kp" = template_wide_kp,
+    "lab" = template_wide_lab,
+    "ovc" = template_wide_ovc,
+    "prep" = template_wide_prep,
+    "sch" = template_wide_sch,
+    "vmmc" = template_wide_vmmc
+  )
+
+  usethis::use_data(template_cols_wide, overwrite = TRUE)
+
+  usethis::use_data(template_wide_techareas, overwrite = TRUE)
+
+  usethis::use_data(template_cols_wgroups, overwrite = TRUE)
+
   usethis::use_data(template_wide_dreams, overwrite = TRUE)
   usethis::use_data(template_wide_gender, overwrite = TRUE)
   usethis::use_data(template_wide_kp, overwrite = TRUE)
@@ -98,10 +121,8 @@ usethis::use_data(template_cols_long, overwrite = TRUE)
   usethis::use_data(template_wide_vmmc, overwrite = TRUE)
 
 
-  #-----
-
-
   #store meta data columns
+
   template_cols_value <- "val"
   template_cols_ind <- "indicator"
   template_cols_disaggs <- c("sex", "age", "population", "otherdisaggregate", "numdenom")
@@ -116,5 +137,43 @@ usethis::use_data(template_cols_long, overwrite = TRUE)
   usethis::use_data(template_cols_disaggs, overwrite = TRUE)
   usethis::use_data(template_cols_meta, overwrite = TRUE)
   usethis::use_data(template_cols_core, overwrite = TRUE)
->>>>>>> develop
 
+  #store template metadata
+
+  template_metadata <- readxl::read_excel("data-raw/templates/FY22_CIRG_Templates-Metadata.xlsx",
+                                      sheet = "Wide Headers",
+                                      col_types = "text",
+                                      n_max = Inf) %>%
+    janitor::clean_names() %>%
+    dplyr::select(tech_area, indicator_code, disaggregate_group,
+                  ends_with("_header"),
+                  indicator, age, sex, otherdisaggregate, population,
+                  numerator_denominator)
+
+  usethis::use_data(template_metadata, overwrite = TRUE)
+
+  # Store template Data Elements
+
+  data_elements <- list.files(
+    path = "./data-raw/templates/",
+    pattern = "^FY\\d{2}.*Indicator Combinations.*",
+    full.names = TRUE) %>%
+    readxl::read_excel(path = ., sheet = 1, col_types = "text") %>%
+    dplyr::select(1:9) %>%
+    dplyr::rename_with(
+      .cols = everything(),
+      .fn = ~stringr::str_remove(., "...\\d")) %>%
+    dplyr::rename_with(
+      .cols = everything(),
+      .fn = ~ stringr::str_remove(., "\\(use in reporting\\)")) %>%
+    janitor::clean_names() %>%
+    dplyr::mutate(
+      numeratordenom = stringr::str_sub(numerator_denominator, 1)) %>%
+    dplyr::select(
+      tech_area, field_marking = required_optional,
+      indicator, disaggregate_group, age, sex,
+      otherdisaggregate = other_disagg,
+      otherdisaggregate_sub = population,
+      numeratordenom = numerator_denominator)
+
+  usethis::use_data(data_elements, overwrite = TRUE)

@@ -1,16 +1,18 @@
 #' Setup processing folders
 #'
-#' @param folder Folder path, default to `cirg-submissions`
-#' @param dt     Processing Dates
+#' @param folder Folder path used for CIRG Data processing
+#' @param dt     Processing date. If null, current date is used
 #'
 #' @export
 #'
 cir_setup <- function(folder = "cirg-submissions", dt = NULL) {
 
   # Date
-  curr_dt <- ifelse(is.null(dt),
-                    base::format(base::Sys.Date(), "%Y-%m-%d"),
-                    dt)
+  curr_dt <- ifelse(
+    is.null(dt),
+    base::format(base::Sys.Date(), "%Y-%m-%d"),
+    dt
+  )
 
   # Processing folder
   if (!base::dir.exists(file.path(".", folder)))
@@ -22,57 +24,31 @@ cir_setup <- function(folder = "cirg-submissions", dt = NULL) {
 
   dir_curr_proc %>% base::dir.create()
 
-  # Raw Data
-  dir_curr_proc %>%
-    base::file.path("0-reference") %>%
-    base::dir.create()
+  # Sub-folders
+  df_subfolders <- c("reference",
+    "raw",
+    "metadata",
+    "validations",
+    "processed",
+    "transformed",
+    "cleaned",
+    "final",
+    "archive") %>%
+    tibble::tibble(folder = .) %>%
+    dplyr::mutate(order = row_number() - 1)
 
-  # Raw Data
-  dir_curr_proc %>%
-    base::file.path("1-raw") %>%
-    base::dir.create()
-
-  # Metadata - 1 file per submission
-  dir_curr_proc %>%
-    base::file.path("2-metadata") %>%
-    base::dir.create()
-
-  # Validations - 3 files per submission
-  dir_curr_proc %>%
-    base::file.path("3-validations") %>%
-    base::dir.create()
-
-  # validated sheets data
-  dir_curr_proc %>%
-    base::file.path("4-processed") %>%
-    base::dir.create()
-
-  # transformation sheets data
-  dir_curr_proc %>%
-    base::file.path("5-transformed") %>%
-    base::dir.create()
-
-  # cleaned data
-  dir_curr_proc %>%
-    base::file.path("6-cleaned") %>%
-    base::dir.create()
-
-  # final data
-  dir_curr_proc %>%
-    base::file.path("7-final") %>%
-    base::dir.create()
-
-  # archived
-  dir_curr_proc %>%
-    base::file.path("7-archive") %>%
-    base::dir.create()
+  # Create all sub-folders
+  df_subfolders %>%
+    purrr::pwalk(~base::dir.create(
+      path = base::file.path(".", dir_curr_proc, paste0(.y, "-", .x))
+    ))
 }
 
 
 #' Get processing folder path
 #'
 #' @param type Folder type
-#' @param dt   porcessing date
+#' @param dt   processing date
 #'
 #' @export
 #'
@@ -154,8 +130,41 @@ cir_archive <- function(.subm) {
   # archive directories
   dir_arch <- cir_folder(type = "archive", dt = pdate)
 
-  fs::file_move(path = filepath,
-                new_path = file.path(dir_arch, basename(filepath)))
+  destpath <- file.path(dir_arch, basename(.subm))
+
+  fs::file_move(path = .subm,
+                new_path = destpath)
+
+  if (interactive()) {
+    usethis::ui_info("Submission has been archived to: {destpath}")
+  }
+}
+
+
+#' @title Get list of visible excel sheets
+#'
+#' @param .subm   Submission file
+#'
+#' @return Worksheet visibility as data frame
+#' @export
+#'
+cir_vsheets <- function(.subm) {
+
+  # Notification
+  # if(base::interactive())
+  #   usethis::ui_info("Checking worksheets visibility for: {.subm}")
+
+  # load file as workbook and check sheets visibility
+  wb <- openxlsx::loadWorkbook(file = .subm)
+
+  .subm %>%
+    openxlsx::getSheetNames() %>%
+    tibble::tibble(
+      filename = base::basename(.subm),
+      name = .) %>%
+    dplyr::mutate(
+      visibility = openxlsx::sheetVisibility(wb)
+    )
 }
 
 #' Extract Meta Data Information about Template
@@ -212,19 +221,220 @@ cir_extract_meta <- function(filepath, meta_type = NULL){
   return(meta)
 }
 
+#' Store Meta Data Information about Template
+#'
+#' @description store meta data information for later validations
+#'
+#' @note TODO - This seems similar to `cir_extract_meta` function. Try this for meta: identify, extract, validate and store
+#'
+#' @param filepath filepath to sumbitted template
+#'
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' # meta_df <- cir_store_meta(filepath)}
 
-#' Check if variable exist
+cir_store_meta <- function(filepath){
+
+  if(is_metatab(filepath)){
+    metatable <- readxl::read_excel(filepath, range = "meta!B1:E2") %>% # BK - What if the meta tab is moved?
+      stack() %>%
+      rename(mvalue = values,
+             mtype = ind) %>%
+      select(mtype, mvalue)
+
+    meta_df <- metatable %>%
+      dplyr::mutate(mtype =
+                      stringr::str_remove_all(mtype,
+                                              "Template |CIRG Reporting |, eg 2020.1|perating |nit|\\/Country|\r\n")
+                    %>% tolower,
+                    mtype = stringr::str_c(mtype, "_meta")) %>%
+      tidyr::pivot_wider(names_from = mtype, values_from = mvalue) %>%
+      dplyr::mutate(filepaths = basename(filepath),
+                    file_size = file.size(filepath),
+                    google_id = NA,
+                    period_meta = str_replace(period_meta, pattern=" ", repl=""))
+
+
+  } else {
+    meta_df <- NA
+  }
+
+  return(meta_df)
+}
+
+#' @title Validate template
+#'
+#' @param df Data frame to check against
+#' @param template Template name to validate against
+#'
+#' @export
+#' @return List of required column names
+#'
+#' @examples
+#' \dontrun{
+#' tmp = "Semi-wide"
+#' tmp_cols <- cir_template_cols(df, template = tmp)}
+
+cir_template_cols <- function(df_cir, template = "long") {
+
+  req_cols <- NULL
+
+  # Long
+  if(template == "Long" & var_exists(df_cir, template_cols_long)) {
+    req_cols <- template_cols_long
+  }
+
+  # Semi-wide
+  if(template == "Semi-wide" &
+      var_exists(df_cir, c(template_cols_core, template_cols_disaggs)) &
+      !var_exists(df_cir, template_cols_ind) &
+      var_exists(df_cir, setdiff(template_cols_semiwide,
+                                 c(template_cols_core, template_cols_disaggs)),
+                 all = FALSE)) {
+    req_cols <- template_cols_semiwide
+  }
+
+  # Wide
+  if(template == "Wide" &
+      var_exists(df_cir, template_cols_core) &
+      !var_exists(df_cir, template_cols_ind) &
+      var_exists(df_cir, setdiff(template_cols_wide, template_cols_core),
+                 all = FALSE)) {
+
+    ta <- cir_template_ta(df_cir)
+
+    req_cols <- ta %>%
+      stringr::str_to_lower() %>%
+      purrr::map(function(.x) {
+        template_cols_wgroups[[.x]]
+      }) %>%
+      base::unlist() %>%
+      base::unique()
+  }
+
+  # if(tmp == "Long" & var_exists(df, template_cols_long)){
+  #   req_cols <- template_cols_long
+  # } else if(tmp == "Semi-wide" &
+  #           var_exists(df, c(template_cols_core, template_cols_disaggs)) &
+  #           !var_exists(df, template_cols_ind) &
+  #           var_exists(df, setdiff(template_cols_semiwide,
+  #                                  c(template_cols_core,
+  #                                    template_cols_disaggs)),
+  #                      all = FALSE)){
+  #   req_cols <- template_cols_semiwide
+  # } else if(tmp == "Wide" & var_exists(df, template_cols_core) & var_matches(df, "dreams")){
+  #   req_cols <- template_wide_dreams
+  # } else if(tmp == "Wide" & var_exists(df, template_cols_core) & var_matches(df, "gend_gbv")){
+  #   req_cols <- template_wide_gender
+  # } else if(tmp == "Wide" & var_exists(df, template_cols_core) & var_matches(df, "^[ct]_verify")){
+  #   req_cols <- template_wide_kp
+  # } else if(tmp == "Wide" & var_exists(df, template_cols_core) & var_matches(df, "eligible|sample|result")){
+  #   req_cols <- template_wide_lab
+  # } else if(tmp == "Wide" & var_exists(df, template_cols_core) & var_matches(df, "ovc")){
+  #   req_cols <- template_wide_ovc
+  # } else if(tmp == "Wide" & var_exists(df, template_cols_core) & var_matches(df, "prep")){
+  #   req_cols <- template_wide_prep
+  # } else if(tmp == "Wide" & var_exists(df, template_cols_core) & var_matches(df, "sc")){
+  #   req_cols <- template_wide_sch
+  # } else if(tmp == "Wide" & var_exists(df, template_cols_core) & var_matches(df, "vmmc")){
+  #   req_cols <- template_wide_vmmc
+  # }
+
+  return(req_cols)
+}
+
+#' @title Extract Technical Areas
+#'
+#' @param df_cir Data frame to extract columns from
+#'
+#' @export
+#' @return Technical Area name(s)
+#'
+#' @examples
+#' \dontrun{
+#' ta <- cir_template_ta(df)}
+
+cir_template_ta <- function(df_cir) {
+
+  setdiff(names(df_cir),
+          c(template_cols_core, "indicator",
+            template_cols_disaggs)) %>%
+    stringr::str_extract("[^.]+") %>%
+    stringr::str_to_lower() %>%
+    tibble::tibble(indicator = .) %>%
+    dplyr::mutate(
+      ta = dplyr::case_when(
+        indicator == "val" ~ "ALL",
+        indicator %in% c("dreams_fp", "dreams_gend_norm") ~ "DREAMS",
+        indicator %in% c("gend_gbv") ~ "GENDER",
+        indicator %in% c("ovc_enroll", "ovc_offer",
+                 "ovc_vl_eligible", "ovc_vlr", "ovc_cls") ~ "OVC",
+        indicator %in% c("tx_pvls_eligible", "tx_pvls_sample",
+                 "tx_pvls_result_returned",
+                 "pmtct_eid_eligible", "pmtct_eid_result_returned") ~ "LAB",
+        indicator %in% c("prep_screen", "prep_eligible", "prep_new_verify",
+                 "prep_1month", "prep_ct_verify") ~ "PrEP",
+        indicator %in% c("sc_arvdisp", "sc_curr", "sc_lmis") ~ "SCH",
+        indicator %in% c("tx_new_verify", "tx_rtt_verify",
+                 "tx_curr_verify", "tx_pvls_verify") ~ "KP",
+        indicator %in% c("vmmc_ae") ~ "VMMC",
+        TRUE ~ NA_character_
+      )
+    ) %>%
+    dplyr::distinct(ta) %>%
+    dplyr::pull()
+}
+
+
+#' Restrict CIR data frame columns
+#'
+#' @param df CIR data frame imported via `cir_import()`
+#'
+#' @export
+
+cir_restrict_cols <- function(df){
+
+  # defaults cols
+  cols <- template_cols_core
+
+  # Template's Tech Area
+  ta <- cir_template_ta(df)
+
+  # Valid Columns
+  cols <- NULL
+
+  if (ta == "ALL") {
+    cols <- intersect(template_cols_long, names(df))
+  } else if (is.na(ta)) {
+    cols <- intersect(template_cols_semiwide, names(df))
+  } else {
+    cols <- intersect(template_cols_wgroups[ta], names(df))
+  }
+
+  if (is.null(cols)) return(NULL)
+
+  df <- dplyr::select_at(df, .vars = vars(all_of(cols)))
+
+  return(df)
+}
+
+
+
+#' Check if all variables exist
 #'
 #' @export
 #' @param df data frame to check against
 #' @param var quoted variable of interest
 
-var_exists <- function(df, var) {
-
-  #var %in% names(df)
-  all(var %in% names(df))
+var_exists <- function(df, var, all = TRUE) {
+  if (all) {
+    all(var %in% names(df))}
+  else {
+    any(var %in% names(df))
+  }
 }
-
 
 #' Check if any variable matches this pattern
 #'
@@ -235,7 +445,6 @@ var_exists <- function(df, var) {
 #'
 
 var_matches <- function(df, pattern) {
-  #var %in% names(df)
   any(stringr::str_detect(string = names(df), pattern = pattern))
 }
 
@@ -288,16 +497,67 @@ flag_extra <- function(required, submitted){
 
 count_missing <- function(df, var){
 
+  nr <- nrow(df)
+
   missing <- df %>%
     dplyr::filter(is.na({{var}})) %>%
-    NROW()
+    nrow()
 
-  missing_pct <- round(missing/NROW(df), 2)*100
-  missing_pct <- paste0("(",missing_pct, "%)")
+  missing_pct <- round(missing/nr, 2)*100
+  missing_pct <- paste0("(", missing_pct, "%)")
 
-  count <- ifelse(missing > 0, crayon::red(missing, "out of", NROW(df), "rows", missing_pct), crayon::green("No"))
+  count <- ifelse(missing > 0,
+                  crayon::red(missing, "out of", NROW(df), "rows", missing_pct),
+                  crayon::green("No"))
+
   return(count)
 }
+
+#' @title Get rows with missing values
+#'
+#' @export
+#' @param df data frame
+#' @param var variable to count missing values
+
+get_missing <- function(df, var){
+
+  df_miss <- df
+
+  if (!"row_id" %in% names(df_miss)) {
+    df_miss <- df_miss %>%
+      dplyr::mutate(row_id = row_number() + 2)
+  }
+
+  df_miss %>%
+    dplyr::filter(is.na({{var}})) %>%
+    dplyr::distinct(row_id) %>%
+    dplyr::pull(row_id)
+}
+
+
+#' @title Get rows with values not matching a pattern
+#'
+#' @export
+#' @param df data frame
+#' @param var variable to count missing values
+
+match_value <- function(df, var, pattern = "FY\\d{2}Q\\d{1}"){
+
+  df_miss <- df
+
+  if (!"row_id" %in% names(df_miss)) {
+    df_miss <- df_miss %>%
+      dplyr::mutate(row_id = row_number() + 2)
+  }
+
+  df_miss %>%
+    dplyr::filter(is.na({var})) %>%
+    dplyr::mutate(vmatch = stringr::str_match({{var}}, pattern)) %>%
+    dplyr::filter(isFALSE(vmatch)) %>%
+    dplyr::distinct(row_id) %>%
+    dplyr::pull(row_id)
+}
+
 
 
 #' Not provided if null
@@ -319,6 +579,24 @@ na_to_chr <- function(obj) {
   ifelse(is.null(obj), "[not available]", obj)
 }
 
+
+#' Return none if vector/list is empty
+#'
+#' @param obj text to be printed
+#' @param type Type of the object, default set to atomic (vector or list). Options are atomic or string
+#' @export
+#'
+empty_to_chr <- function(obj, type = "atomic") {
+  if (type == "atomic") {
+    ifelse(purrr::is_empty(obj), "None", paste0(obj, collapse = ", "))
+  }
+  else if (type == "string") {
+    ifelse(base::is.character(obj) & base::nchar(obj) == 0, "None", obj)
+  }
+  else {
+    base::toString(obj)
+  }
+}
 
 #' Paint console text in red
 #'
@@ -372,6 +650,20 @@ paint_ifna <- function(txt,
                        false_paint = crayon::blue) {
 
   ifelse(base::is.na(txt), true_paint(txt), false_paint(txt))
+}
+
+#' Paint if empty
+#'
+#' @param txt text to be painted and printed
+#' @param true_paint crayon function to execute if ~is_empty(txt) or txt == ""
+#' @param false_patin crayon function to execute
+#' @export
+#'
+paint_ifempty <- function(txt,
+                          true_paint = crayon::blue,
+                          false_paint = crayon::yellow) {
+
+  ifelse(toString(txt) == "", true_paint("None"), false_paint(txt))
 }
 
 #' Paint if null

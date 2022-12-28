@@ -42,7 +42,10 @@ is_cirgtab <- function(filepath){
   if(missing(filepath))
     stop("No filepath provided.")
 
-  shts <- readxl::excel_sheets(filepath)
+  #shts <- readxl::excel_sheets(filepath)
+  shts <- cir_vsheets(filepath) %>%
+    dplyr::filter(visibility == "visible") %>%
+    dplyr::pull(name)
 
   shts_cirg <- shts %>%
     stringr::str_subset("CIRG") %>%
@@ -51,9 +54,8 @@ is_cirgtab <- function(filepath){
   msg <- paste("No CIRG tabs included in file: ", basename(filepath))
 
   # TODO - Make sure to return a boolean: Yes / No
-  if(shts_cirg == 0) {
-    #stop(msg)
-    print(msg)
+  if(shts_cirg == 0 & base::interactive()) {
+    usethis::ui_warn(msg)
   }
 
   shts_cirg > 0
@@ -72,7 +74,10 @@ is_metatab <- function(filepath){
   if(missing(filepath))
     stop("No filepath provided.")
 
-  shts <- readxl::excel_sheets(filepath)
+  #shts <- readxl::excel_sheets(filepath)
+  shts <- cir_vsheets(filepath) %>%
+    dplyr::filter(visibility == "visible") %>%
+    dplyr::pull(name)
 
   # TODO - Make sure to capture all the cases
   "meta" %in% shts
@@ -91,27 +96,14 @@ check_meta <- function(filepath){
   # response
   has_meta <- FALSE
   has_valid_meta <- FALSE
+  meta <- NULL
 
   #type
   if(is_metatab(filepath)){
-
     has_meta <- TRUE
     meta <- cir_extract_meta(filepath)
 
-    # type <- cir_extract_meta(filepath, "type")
-    # temp_version <- cir_extract_meta(filepath, "version")
-    # reppd_meta <-  cir_extract_meta(filepath, "period")
-    # ou_name <-  cir_extract_meta(filepath, "ou")
-  }
-  else {
-    # # TODO - Should `cir_import` be checking `is_cirtab`?
-    # df <- cir_import(filepath)
-    #
-    # # TODO - No need to guess, just reset all these variable to [no meta provided]
-    # type <- ifelse(var_exists(df, "val"), "Long [no meta provided]", "Wide [no meta provided]")
-    # temp_version <- "[no meta provided]"
-    # reppd_meta <- "[no period provided]"
-
+  } else {
     meta <- tibble::tibble(
       ou = NA_character_,
       period = NA_character_,
@@ -123,26 +115,52 @@ check_meta <- function(filepath){
                           values_to = 'mvalue')
   }
 
+  # Check period validity
+  rep_pd <- stringr::str_remove_all(meta[meta$mtype == "period", "mvalue"], " ")
+
+  curr_dt <- glamr::curr_date()
+
+  pd_valid <- glamr::pepfar_data_calendar %>%
+    dplyr::mutate(pd = paste0("FY", str_sub(fiscal_year, 3,4), "Q", quarter)) %>%
+    dplyr::filter(entry_close <= curr_dt) %>%
+    dplyr::distinct(pd) %>%
+    dplyr::pull(pd) %>%
+    purrr::has_element(rep_pd)
+
+  # Check Country
+  rep_ou <- meta[meta$mtype == "ou", "mvalue"]
+
+  ou_valid <- rep_ou %in% pepfar_countries$operatingunit | rep_ou %in% pepfar_countries$ou_country
+
+  # Check template
+  temp_valid <- meta[meta$mtype == "type", "mvalue"] %in% names(templates)
+
   # Reshape metadata
   meta <- meta %>%
     tidyr::pivot_wider(names_from = mtype, values_from = mvalue) %>%
     tibble::add_column(filename = basename(filepath), .before = 1) %>%
     tibble::add_column(has_meta = has_meta) %>%
-    tibble::add_column(has_valid_meta = !any(is.na(meta$mvalue)))
+    tibble::add_column(has_valid_ou = ou_valid) %>%
+    tibble::add_column(has_valid_period = pd_valid) %>%
+    tibble::add_column(has_valid_template = temp_valid) %>%
+    tibble::add_column(has_valid_meta = !any(is.na(meta$mvalue) & ou_valid & pd_valid & temp_valid))
 
   #PRINT and/or LOG VALIDATION
 
   if (interactive()) {
 
-    cat("\n--- METADATA ----",
-        "\nFilename:", crayon::blue(meta$filename),
-        "\nHas meta sheet?", paint_iftrue(meta$has_meta),
-        "\nHas valid metadata?", paint_iftrue(meta$has_valid_meta),
-        "\nOU/Country:", paint_ifna(meta$ou),
-        "\nWhat template was submitted?", crayon::blue(paste(meta$type, meta$version)),
-        "\nWhat reporting period?", paint_ifna(meta$period),
-        "\n")
+    usethis::ui_info("--- METADATA ----")
 
+    cat("\nFilename:", crayon::blue(meta$filename),
+        "\nHas metadata sheet?", paint_iftrue(meta$has_meta),
+        "\nOU/Country:", paint_ifna(meta$ou),
+        "\nIs OU/Country valid:", paint_iftrue(meta$has_valid_ou),
+        "\nReporting period:", paint_ifna(meta$period),
+        "\nIs Rep. period valid?", paint_iftrue(meta$has_valid_period),
+        "\nSubmission template:", crayon::blue(paste(meta$type, meta$version)),
+        "\nIs template valid?", paint_iftrue(meta$has_valid_template),
+        "\nIs metadata valid?", paint_iftrue(meta$has_valid_meta),
+        "\n")
   }
 
   return(meta)
@@ -162,33 +180,51 @@ check_tabs <- function(filepath){
     has_cirg <- TRUE
   }
 
-  #tabs
-  tabs <- readxl::excel_sheets(filepath)
+  #worksheets
+
+  #tabs <- readxl::excel_sheets(filepath)
+  tabs <- cir_vsheets(filepath)
+
+  tabs_list <- tabs$name
+
+  tabs_count <- nrow(tabs)
 
   tabs_imported <- tabs %>%
+    dplyr::filter(visibility == "visible") %>%
+    dplyr::pull(name) %>%
     stringr::str_subset("CIRG") %>%
     paste(collapse = ", ")
 
   tabs_excluded <- tabs %>%
+    dplyr::filter(visibility == "visible") %>%
+    dplyr::pull(name) %>%
     stringr::str_subset("CIRG|meta", negate = TRUE) %>%
+    paste(collapse = ", ")
+
+  tabs_hidden <- tabs %>%
+    dplyr::filter(visibility != "visible") %>%
+    dplyr::pull(name) %>%
     paste(collapse = ", ")
 
   cirg <- tibble::tibble(
     has_cirg_sheets = has_cirg,
-    sheets_count = length(tabs),
-    sheets_valid = tabs_imported,
-    sheets_exclude = tabs_excluded
+    sheets_count = tabs_count,
+    sheets_valid = ifelse(nchar(tabs_imported) > 0, tabs_imported, "None"),
+    sheets_exclude = ifelse(nchar(tabs_excluded) > 0, tabs_excluded, "None"),
+    sheets_hidden = ifelse(nchar(tabs_hidden) > 0, tabs_hidden, "None"),
   )
 
   #PRINT and/or LOG VALIDATION
 
   if (interactive()) {
-    cat("\n---- DATA SHEETS ----",
-        "\nHas CIRG Sheets? ", paint_iftrue(cirg$has_cirg_sheets),
+    usethis::ui_info("---- DATA SHEETS ----")
+
+    cat("\nHas CIRG Sheets? ", paint_iftrue(cirg$has_cirg_sheets),
         "\nNumber of sheets: ", cirg$sheets_count,
-        "\nAll sheets [valid sheet must be labeled 'CIRG']: ", paint_blue(paste(tabs, collapse = ", ")),
+        "\nAll sheets [valid sheet must be labeled 'CIRG']: ", paint_blue(paste(tabs_list, collapse = ", ")),
         "\nWhat sheets will be imported?", paint_green(cirg$sheets_valid),
-        "\nWhat sheets will be excluded?", paint_red(cirg$sheets_exclude),
+        "\nWhat sheets will be excluded?", paint_ifempty(cirg$sheets_exclude),
+        "\nWhat sheets are hidden?", paint_ifempty(cirg$sheets_hidden),
         "\n")
   }
 

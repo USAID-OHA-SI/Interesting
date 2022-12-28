@@ -7,9 +7,9 @@
 cir_setup(folder = "cirg-submissions", dt = NULL)
 }
 \arguments{
-\item{folder}{Folder path, default to \code{cirg-submissions}}
+\item{folder}{Folder path used for CIRG Data processing}
 
-\item{dt}{Processing Dates}
+\item{dt}{Processing date. If null, current date is used}
 }
 \description{
 Setup processing folders

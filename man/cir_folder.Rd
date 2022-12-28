@@ -9,7 +9,7 @@ cir_folder(type = "raw", dt = NULL)
 \arguments{
 \item{type}{Folder type}
 
-\item{dt}{porcessing date}
+\item{dt}{processing date}
 }
 \description{
 Get processing folder path

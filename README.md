@@ -26,7 +26,6 @@ remotes::install_github("USAID-OHA-SI/Interesting", ref="develop")
 
 ### Notes
 
-
 <!-- ``` r -->
 <!-- # install.packages("devtools") -->
 <!-- devtools::install_github("USAID-OHA-SI/Interesting") -->

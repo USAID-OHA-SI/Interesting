@@ -4,10 +4,15 @@
 \alias{check_disaggs}
 \title{Validate disaggs for export}
 \usage{
-check_disaggs(df)
+check_disaggs(df, ref_de)
 }
 \arguments{
-\item{df}{HFR data framed created by \code{cir_process_template()}}
+\item{df}{HFR data frame containing reshaped submission}
+
+\item{ref_de}{CIR Data Element Reference Data as data frame}
+}
+\value{
+list of row ids with invalid indicators' disaggregations
 }
 \description{
 Validate disaggs for export

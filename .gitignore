@@ -40,6 +40,17 @@ vignettes/*.pdf
 # R Environment Variables
 .Renviron
 
+#no data
+*.csv
+*.txt
+*.rds
+*.xlsx
+*.xls
+*.zip
+*.png
+*.twbx
+*.pptx
+*.hyper
 
 #nothing from these folders
 AI/*
@@ -51,5 +62,12 @@ Documents/*
 cirg-submissions/*
 ou_submissions/*
 tableau/*
+data-raw/validations/*
+cirg-submissions/*
+ou_submissions/
+out/
+in/
+tableau/
+
 
 

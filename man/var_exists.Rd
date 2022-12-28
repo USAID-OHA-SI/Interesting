@@ -2,9 +2,9 @@
 % Please edit documentation in R/utilities.R
 \name{var_exists}
 \alias{var_exists}
-\title{Check if variable exist}
+\title{Check if all variables exist}
 \usage{
-var_exists(df, var)
+var_exists(df, var, all = TRUE)
 }
 \arguments{
 \item{df}{data frame to check against}
@@ -12,5 +12,5 @@ var_exists(df, var)
 \item{var}{quoted variable of interest}
 }
 \description{
-Check if variable exist
+Check if all variables exist
 }
