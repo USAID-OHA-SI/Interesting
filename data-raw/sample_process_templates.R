@@ -103,13 +103,6 @@
   # Metadata
 
   # Initial Validation
-  a <- subms %>%
-    dplyr::first() %>%
-    cir_extract_meta()
-
-  subms %>%
-    dplyr::first() %>%
-    check_meta()
 
   meta <- subms %>%
     dplyr::first() %>%
@@ -174,18 +167,6 @@
   df_trans %>% get_missing("indicator")
   df_trans %>% get_missing("numeratordenom")
 
-  df_trans %>%
-    validate_output(
-      refs = list(
-        ou = meta$ou,
-        pd = str_remove_all(meta$period, "[:space:]"),
-        orgs = NULL,
-        mechs = NULL,
-        de = NULL
-      ),
-      content = F
-    )
-
 
   # Validate outputs -- wrong values
 
@@ -225,8 +206,10 @@
   df_trans %>%
     check_disaggs(ref_de = data_elements)
 
+  # ref datasets
   refs <- list(
     ou = meta$ou,
+    pd = meta$period,
     orgs = df_orgs,
     mechs = df_mechs,
     de = data_elements

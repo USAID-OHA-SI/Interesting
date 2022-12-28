@@ -22,15 +22,10 @@ validate_output <- function(df, refs, content=FALSE){
     dplyr::pull() %>%
     dplyr::first()
 
-  subm_pds <- df %>%
-    dplyr::filter(!is.na(reportingperiod)) %>%
-    dplyr::distinct(reportingperiod) %>%
-    dplyr::pull()
-
   # Notifications
   if (interactive()) {
-    cat("\n---- OUTPUT VALIDATIONS ----",
-        "\n---- Missing Values ----")
+    usethis::ui_info("---- OUTPUT VALIDATIONS ----")
+    usethis::ui_info("---- Missing Values ----")
   }
 
   ou_miss <- df %>% get_missing("operatingunit")
@@ -39,8 +34,9 @@ validate_output <- function(df, refs, content=FALSE){
   pd_mism <- df %>%
     dplyr::rowwise() %>%
     dplyr::filter(!is.na(reportingperiod)) %>%
-    dplyr::mutate(pd_missm = reportingperiod == refs$pd) %>%
+    dplyr::mutate(pd_mism = reportingperiod != refs$pd) %>%
     dplyr::ungroup() %>%
+    dplyr::filter(pd_mism) %>%
     dplyr::distinct(row_id) %>%
     dplyr::pull(row_id)
 
@@ -72,8 +68,7 @@ validate_output <- function(df, refs, content=FALSE){
   )
 
   if (interactive()) {
-    cat("\n",
-        "\nOperaringunit: ", empty_to_chr(vout$ou_missing, type="string"),
+    cat("\nOperaringunit: ", empty_to_chr(vout$ou_missing, type="string"),
         "\nReporting Period: ", empty_to_chr(vout$pd_missing, type="string"),
         "\nOrgunit: ", empty_to_chr(vout$org_missing, type="string"),
         "\nMechanisms: ", empty_to_chr(vout$mech_missing, type="string"),
@@ -110,7 +105,7 @@ validate_output <- function(df, refs, content=FALSE){
   # Skip content validation => parameter needs to be set to true + ref datasets
 
   if (interactive()) {
-    cat("\n---- Invalid Values ----")
+    usethis::ui_info("---- Invalid Values ----")
   }
 
   # Check operatingunit
@@ -146,15 +141,14 @@ validate_output <- function(df, refs, content=FALSE){
   # Notification
 
   if (interactive()) {
-    cat("\n",
-        "\nOperaringunit: ", empty_to_chr(vout$ou_valid, type="string"),
+    cat("\nOperaringunit: ", empty_to_chr(vout$ou_valid, type="string"),
         "\nReporting Period: ", empty_to_chr(vout$pd_valid, type="string"),
         "\nOrgunit: ", empty_to_chr(vout$org_valid, type="string"),
         "\nMechanisms: ", empty_to_chr(vout$mech_valid, type="string"),
         "\nIndicator: ", empty_to_chr(vout$ind_valid, type="string"),
         "\nNum/Denominator: ", empty_to_chr(vout$nd_valid, type="string"),
         "\nDisaggregation: ", empty_to_chr(vout$disagg_valid, type="string"),
-        "\n")
+        "\n\n")
   }
 
   # Return data, message and checks
