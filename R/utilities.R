@@ -145,16 +145,17 @@ cir_archive <- function(.subm) {
 cir_vsheets <- function(.subm) {
 
   # Notification
-  if(base::interactive())
-    usethis::ui_info("Checking worksheets visibility for: {.subm}")
+  # if(base::interactive())
+  #   usethis::ui_info("Checking worksheets visibility for: {.subm}")
 
   # load file as workbook and check sheets visibility
   wb <- openxlsx::loadWorkbook(file = .subm)
 
   .subm %>%
     openxlsx::getSheetNames() %>%
-    tibble::tibble(filename = base::basename(.subm),
-                   name = .) %>%
+    tibble::tibble(
+      filename = base::basename(.subm),
+      name = .) %>%
     dplyr::mutate(
       visibility = openxlsx::sheetVisibility(wb)
     )
