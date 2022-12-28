@@ -35,15 +35,16 @@ validate_output <- function(df, refs, content=FALSE){
 
   ou_miss <- df %>% get_missing("operatingunit")
   pd_miss <- df %>% get_missing("reportingperiod")
+
+  pd_mism <- df %>%
+    dplyr::rowwise() %>%
+    dplyr::filter(!is.na(reportingperiod)) %>%
+    dplyr::mutate(pd_missm = reportingperiod == refs$pd) %>%
+    dplyr::ungroup() %>%
+    dplyr::distinct(row_id) %>%
+    dplyr::pull(row_id)
+
   pd_fmt <- df %>% match_value("reportingperiod")
-
-  curr_dt <- glamr::curr_date()
-
-  pd_post <- glamr::pepfar_data_calendar %>%
-    mutate(pd = paste0("FY", str_sub(fiscal_year, 3,4), "Q", quarter)) %>%
-    filter(entry_close <= curr_dt) %>%
-    pull(pd) %>%
-    has_element(subm_pds)
 
   org_miss <- df %>% get_missing("orgunituid")
   mech_miss <- df %>% get_missing("mech_code")
@@ -54,10 +55,9 @@ validate_output <- function(df, refs, content=FALSE){
   vout <- tibble::tibble(
     filename = subm_file,
     sheet = subm_sheet,
-    #period = paste0(subm_pds, collapse = ", "),
     pd_missing = paste0(pd_miss, collapse = ", "),
-    pd_valid = paste0(pd_fmt, collapse = ", "),
-    pd_future = NA,
+    pd_format = paste0(pd_fmt, collapse = ", "),
+    pd_mismatch = paste0(pd_mism, collapse = ", "),
     ou_missing = paste0(ou_miss, collapse = ", "),
     ou_valid = NA,
     org_missing = paste0(org_miss, collapse = ", "),

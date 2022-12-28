@@ -544,6 +544,7 @@ match_value <- function(df, var, pattern = "FY\\d{2}Q\\d{1}"){
   }
 
   df_miss %>%
+    dplyr::filter(is.na({var})) %>%
     dplyr::mutate(vmatch = stringr::str_match({{var}}, pattern)) %>%
     dplyr::filter(isFALSE(vmatch)) %>%
     dplyr::distinct(row_id) %>%

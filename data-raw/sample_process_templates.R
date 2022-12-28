@@ -102,25 +102,12 @@
 
   # Metadata
 
-  # subms %>%
-  #   dplyr::first() %>%
-  #   cir_extract_meta()
-  #
-  # subms %>%
-  #   dplyr::first() %>%
-  #   check_meta()
-  #
-  # subms %>%
-  #   dplyr::first() %>%
-  #   check_tabs()
-
   # Initial Validation
   meta <- subms %>%
     dplyr::first() %>%
     validate_initial()
 
-  metas <- subms %>%
-    map_dfr(validate_initial)
+  metas <- subms %>% map_dfr(validate_initial)
 
   # Import & 2nd round of Validation
   df_subm <- subms %>%
@@ -128,39 +115,23 @@
     cir_import(template = meta$type)
 
   df_subm$checks %>% glimpse
-  df_subm$checks
   df_subm$data %>% glimpse
 
   # Import all
-  df_imp_checks <- NULL
-
-  df_imp_data <- metas %>%
-    filter(subm_valid == TRUE) %>%
-    select(filename, type) %>%
-    pmap_dfr(function(filename, type) {
-      subm <- cir_import(filepath = file.path(dir_raw, filename), template = type)
-
-      df_imp_checks <<- bind_rows(subm$checks)
-
-      return(subm$data)
-    })
+  # df_imp_checks <- NULL
+  #
+  # df_imp_data <- metas %>%
+  #   filter(subm_valid == TRUE) %>%
+  #   select(filename, type) %>%
+  #   pmap_dfr(function(filename, type) {
+  #     subm <- cir_import(filepath = file.path(dir_raw, filename), template = type)
+  #
+  #     df_imp_checks <<- bind_rows(subm$checks)
+  #
+  #     return(subm$data)
+  #   })
 
   # Transformation
-
-  #Use template Metadata as lookup table
-  tmp_meta <- template_metadata %>%
-    select(-tech_area, -ends_with("_header")) %>%
-    mutate(indicator_code = case_when(
-      str_detect(indicator_code, "pep|sexual violence") ~
-        str_remove_all(indicator_code, " "),
-      str_detect(indicator_code, "physical and") ~
-        str_replace_all(indicator_code, " | and\\/or ", "_"),
-      TRUE ~ indicator_code
-    )) %>% distinct()
-
-  df_subm$data %>%
-    cir_gather() %>%
-    left_join(tmp_meta, by = "indicator_code")
 
   # df_trans <- df_subm$data %>%
   #   cir_gather() %>%
@@ -173,11 +144,7 @@
 
   # Template DataElement Pattern
   # <indicator>.<age>.<sex>.<otherdisaggs>.<population>.<numdenom>
-  # df_trans %>% distinct(indicator)
-  # df_trans %>% distinct(sex)
-  # df_trans %>% distinct(ageasentered)
-  # df_trans %>% distinct(otherdisaggregate)
-  # df_trans %>% distinct(otherdisaggregate_sub)
+
 
   # Validate outputs -- Missing
 
@@ -187,9 +154,10 @@
 
   curr_dt <- glamr::curr_date()
 
-  pepfar_data_calendar %>%
+  glamr::pepfar_data_calendar %>%
     mutate(pd = paste0("FY", str_sub(fiscal_year, 3,4), "Q", quarter)) %>%
     filter(entry_close <= curr_dt) %>%
+    distinct(pd) %>%
     pull(pd) %>%
     has_element("FY22Q4")
 
@@ -202,6 +170,7 @@
     validate_output(
       refs = list(
         ou = meta$ou,
+        pd = str_remove_all(meta$period, "[:space:]"),
         orgs = NULL,
         mechs = NULL,
         de = NULL

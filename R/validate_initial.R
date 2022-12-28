@@ -96,15 +96,14 @@ check_meta <- function(filepath){
   # response
   has_meta <- FALSE
   has_valid_meta <- FALSE
+  meta <- NULL
 
   #type
   if(is_metatab(filepath)){
-
     has_meta <- TRUE
     meta <- cir_extract_meta(filepath)
-  }
-  else {
 
+  } else {
     meta <- tibble::tibble(
       ou = NA_character_,
       period = NA_character_,
@@ -116,12 +115,35 @@ check_meta <- function(filepath){
                           values_to = 'mvalue')
   }
 
+  # Check period validity
+  rep_pd <- stringr::str_remove_all(meta[mtype == "period", "mvalue"], " ")
+
+  curr_dt <- glamr::curr_date()
+
+  pd_valid <- glamr::pepfar_data_calendar %>%
+    dplyr::mutate(pd = paste0("FY", str_sub(fiscal_year, 3,4), "Q", quarter)) %>%
+    dplyr::filter(entry_close <= curr_dt) %>%
+    dplyr::distinct(pd) %>%
+    dplyr::pull(pd) %>%
+    purrr::has_element(rep_pd)
+
+  # Check Country
+  rep_ou <- meta[mtype == "ou", "mvalue"]
+
+  ou_valid <- rep_ou %in% pepfar_countries$operatingunit | rep_ou %in% pepfar_countries$ou_country
+
+  # Check template
+  temp_valid <- meta[mtype == "type", "mvalue"] %in% names(templates)
+
   # Reshape metadata
   meta <- meta %>%
     tidyr::pivot_wider(names_from = mtype, values_from = mvalue) %>%
     tibble::add_column(filename = basename(filepath), .before = 1) %>%
     tibble::add_column(has_meta = has_meta) %>%
-    tibble::add_column(has_valid_meta = !any(is.na(meta$mvalue)))
+    tibble::add_column(has_valid_ou = ou_valid) %>%
+    tibble::add_column(has_valid_period = pd_valid) %>%
+    tibble::add_column(has_valid_template = temp_valid) %>%
+    tibble::add_column(has_valid_meta = !any(is.na(meta$mvalue) & ou_valid & pd_valid & temp_valid))
 
   #PRINT and/or LOG VALIDATION
 

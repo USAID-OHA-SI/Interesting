@@ -1,3 +1,13 @@
+# Template Types
+
+  templates <- list(
+    "Wide" = c("0.01", "1.00", "2.01"),
+    "Semi-wide" = c("0.01", "1.00", "2.01"),
+    "Long" = c("0.01", "1.00", "2.01")
+  )
+
+  usethis::use_data(templates, overwrite = TRUE)
+
 #Template Columns ------------------------------
 
  #store column names for long template

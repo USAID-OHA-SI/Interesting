@@ -4,10 +4,12 @@
 \alias{empty_to_chr}
 \title{Return none if vector/list is empty}
 \usage{
-empty_to_chr(obj)
+empty_to_chr(obj, type = "atomic")
 }
 \arguments{
 \item{obj}{text to be printed}
+
+\item{type}{Type of the object, default set to atomic (vector or list). Options are atomic or string}
 }
 \description{
 Return none if vector/list is empty

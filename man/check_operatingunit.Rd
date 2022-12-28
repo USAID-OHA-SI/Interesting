@@ -11,6 +11,9 @@ check_operatingunit(df, ou)
 
 \item{ou}{Name of OU/Country submitting data}
 }
+\value{
+list of row ids with invalid operatingunit
+}
 \description{
 Check OU
 }
