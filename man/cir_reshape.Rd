@@ -15,3 +15,6 @@ Cleaned and tidy data frame
 \description{
 Transform CIR Data Frame
 }
+\note{
+This can also be accomplished with \code{cir_gather()} + \code{cir_munge_string()}
+}

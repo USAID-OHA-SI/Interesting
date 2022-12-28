@@ -1,14 +1,13 @@
 #' Validation Checks
 #'
 #' @param df HFR data framed created by `cir_process_template()`
+#' @param refs Reference datasets to include orgs, mechs, and data elements
 #' @param content check full dataset
-#' @param datim_path path to look up files
 #'
+#' @return list containing validated data along with results of the checks
 #' @export
 
-validate_output <- function(df, refs,
-                            content=FALSE,
-                            refs_path=NULL){
+validate_output <- function(df, refs, content=FALSE){
 
   # Extract Meta Info
   subm_file <- df %>%
@@ -55,9 +54,10 @@ validate_output <- function(df, refs,
   vout <- tibble::tibble(
     filename = subm_file,
     sheet = subm_sheet,
-    period = paste0(subm_pds, collapse = ", "),
+    #period = paste0(subm_pds, collapse = ", "),
     pd_missing = paste0(pd_miss, collapse = ", "),
     pd_valid = paste0(pd_fmt, collapse = ", "),
+    pd_future = NA,
     ou_missing = paste0(ou_miss, collapse = ", "),
     ou_valid = NA,
     org_missing = paste0(org_miss, collapse = ", "),
@@ -73,40 +73,72 @@ validate_output <- function(df, refs,
 
   if (interactive()) {
     cat("\n",
-        "\nOperaringunit: ", vout$ou_missing,
-        "\nReporting Period: ", vout$pd_missing,
-        "\nOrgunit: ", vout$org_missing,
-        "\nMechanisms: ", vout$mech_missing,
-        "\nIndicator: ", vout$ind_missing,
-        "\nNum/Denominator: ", vout$nd_missing,
+        "\nOperaringunit: ", empty_to_chr(vout$ou_missing, type="string"),
+        "\nReporting Period: ", empty_to_chr(vout$pd_missing, type="string"),
+        "\nOrgunit: ", empty_to_chr(vout$org_missing, type="string"),
+        "\nMechanisms: ", empty_to_chr(vout$mech_missing, type="string"),
+        "\nIndicator: ", empty_to_chr(vout$ind_missing, type="string"),
+        "\nNum/Denominator: ", empty_to_chr(vout$nd_missing, type="string"),
         "\n")
   }
+
+  # Skip content validation
+
+  if (content == FALSE) {
+
+    return(
+      list(
+        status = "success",
+        message = "Content validation was skipped as instructed",
+        checks = dplyr::select(vout, filename, sheet, dplyr::ends_with("missing")),
+        data = df
+      )
+    )
+  }
+
+  if (content == TRUE & (is.null(refs$orgs) | is.null(refs$mechs) | is.null(refs$de))) {
+    return(
+      list(
+        status = "failed",
+        message = "Missing some (if not all) of the reference datasets needed for this validation",
+        checks = dplyr::select(vout, filename, sheet, dplyr::ends_with("missing")),
+        data = df
+      )
+    )
+  }
+
+  # Skip content validation => parameter needs to be set to true + ref datasets
 
   if (interactive()) {
     cat("\n---- Invalid Values ----")
   }
 
-  #check_output_cols(df) # NOTE - Looks like a repetition
+  # Check operatingunit
   ou_valid <- check_operatingunit(df, refs$ou)
 
   vout$ou_valid <- paste0(ou_valid, collapse = ", ")
 
+  # Check orgunits
   org_valid <- check_orgunituids(df, ref_orgs = refs$orgs)
 
   vout$org_valid <- paste0(org_valid, collapse = ", ")
 
+  # Check mechanisms
   mech_valid <- check_mechs(df, ref_mechs = refs$mechs)
 
   vout$mech_valid <- paste0(mech_valid, collapse = ", ")
 
+  # Check Indicators
   ind_valid <- check_inds(df, ref_de = refs$de)
 
   vout$ind_valid <- paste0(ind_valid, collapse = ", ")
 
+  # Check Disaggs
   disagg_valid <- check_disaggs(df, ref_de = refs$de)
 
   vout$disagg_valid <- paste0(disagg_valid, collapse = ", ")
 
+  # Check numerator / denom
   nd_valid <- check_numdenom(df)
 
   vout$na_valid <- paste0(nd_valid, collapse = ", ")
@@ -115,26 +147,21 @@ validate_output <- function(df, refs,
 
   if (interactive()) {
     cat("\n",
-        "\nOperaringunit: ", vout$ou_valid,
-        "\nReporting Period: ", vout$pd_valid,
-        "\nOrgunit: ", vout$org_valid,
-        "\nMechanisms: ", vout$mech_valid,
-        "\nIndicator: ", vout$ind_valid,
-        "\nNum/Denominator: ", vout$nd_valid,
-        "\nNum/Denominator: ", vout$diagg_valid,
+        "\nOperaringunit: ", empty_to_chr(vout$ou_valid, type="string"),
+        "\nReporting Period: ", empty_to_chr(vout$pd_valid, type="string"),
+        "\nOrgunit: ", empty_to_chr(vout$org_valid, type="string"),
+        "\nMechanisms: ", empty_to_chr(vout$mech_valid, type="string"),
+        "\nIndicator: ", empty_to_chr(vout$ind_valid, type="string"),
+        "\nNum/Denominator: ", empty_to_chr(vout$nd_valid, type="string"),
+        "\nDisaggregation: ", empty_to_chr(vout$disagg_valid, type="string"),
         "\n")
   }
 
-  #check_content(df)
-
-  # #optional check
-  # if (content & !is.null(datim_path)) {
-  #   df <- check_content(df, output_path, datim_path)
-  # }
-
+  # Return data, message and checks
   return(list(
-    status = NA,
-    vout = vout,
+    status = "success",
+    message = "All validations successfully completed",
+    checks = vout,
     data = df
   ))
 }
@@ -172,6 +199,9 @@ check_output_cols <- function(df){
 #'
 #' @param df Data frame from transformed submission
 #' @param ou Name of OU/Country submitting data
+#'
+#' @return list of row ids with invalid operatingunit
+#' @export
 
 check_operatingunit <- function(df, ou) {
 
@@ -194,7 +224,7 @@ check_operatingunit <- function(df, ou) {
 
 #' Validate orgunituids
 #'
-#' @param df HFR data frame containing reshaped submission
+#' @param df       HFR data frame containing reshaped submission
 #' @param ref_orgs Datim OU Orgunits Reference Data as data frame
 #'
 #' @export
@@ -263,7 +293,7 @@ check_numdenom <- function(df){
     dplyr::filter(!is.na(numeratordenom)) %>%
     dplyr::rowwise() %>%
     dplyr::mutate(
-      nd_valid = !numeratordenom %in% c("N", "Numerator", "D", "Denominator")
+      nd_valid = numeratordenom %in% c("N", "Numerator", "D", "Denominator")
     ) %>%
     dplyr::ungroup() %>%
     dplyr::filter(!nd_valid) %>%
@@ -287,7 +317,8 @@ check_disaggs <- function(df, ref_de){
     dplyr::filter(!is.na(indicator)) %>%
     dplyr::left_join(
       dplyr::select(ref_de, !c("tech_area", "disaggregate_group")),
-      by = c("indicator", "age", "sex", "otherdisaggregate",
+      by = c("indicator", "ageasentered" = "age",
+             "sex", "otherdisaggregate",
              "otherdisaggregate_sub", "numeratordenom")
     ) %>%
     dplyr::filter(is.na(field_marking)) %>%

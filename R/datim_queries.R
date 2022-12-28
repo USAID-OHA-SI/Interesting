@@ -1,7 +1,12 @@
 #' @title Query Datim SQLViews
 #'
-#' @param username
-#' @param password
+#' @param username Datim username
+#' @param password Datim password
+#' @param view_name Datim SQLView name
+#' @param dataset   Return SQLView dataset or uid? Default is false
+#' @param datauid   Data UID
+#' @param query     SQLView Query params, a list containing type and params key value pairs
+#' @param base_url  Datim API Base URL
 #'
 #' @export
 #' @return SQLView uid or dataset as data frame
@@ -141,7 +146,10 @@ datim_sqlviews <- function(username, password,
 
 #' @title Pull Orgunits
 #'
-#' @param username
+#' @param username Datim username
+#' @param password Datim password
+#' @param cntry    Country name
+#' @param base_url Datim API Base URL
 #'
 #' @export
 #' @return OU Orgunit as data frame
@@ -196,10 +204,13 @@ datim_orgunits <- function(username, password, cntry, base_url = NULL) {
 
 #' @title Pull Orgunits
 #'
-#' @param username
+#' @param username Datim username
+#' @param password Datim password
+#' @param cntry    Country name
+#' @param base_url Datim API Base URL
 #'
 #' @export
-#' @return OU Orgunit as data frame
+#' @return OU Mechanisms as data frame
 #'
 datim_mechs <- function(username, password, cntry, base_url = NULL) {
 

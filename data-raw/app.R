@@ -189,7 +189,7 @@ library(glue)
 
     # Submissions Page ----
 
-    # List of selected submissions
+    # List of selected submissions ----
 
     subm_files <- NULL
 
@@ -244,7 +244,7 @@ library(glue)
       })
     })
 
-    # Meta data from selected file
+    # Meta data from selected file ----
 
     df_metas <- NULL
 
@@ -349,7 +349,7 @@ library(glue)
     })
 
 
-    # Imports Pre-validated Submissions
+    # Imports Pre-validated Submissions ----
 
     df_imports <- NULL
 
@@ -465,7 +465,7 @@ library(glue)
       })
     })
 
-    # Transform Submissions
+    # Transform Submissions ----
 
     df_transformed <- NULL
 
@@ -525,7 +525,7 @@ library(glue)
       })
     })
 
-    # Validate Submissions' Content
+    # Validate Submissions' Content ----
 
     df_validated <- NULL
 
@@ -544,8 +544,17 @@ library(glue)
         HTML(as.character(p("")))
       })
 
+      # Get refs datasets
+      df_refs <- list(
+        ou = df_metas$ou,
+        orgs = NULL,
+        mechs = NULL,
+        de = NULL
+      )
+
+      # Validate Outputs
       df_validated <<- df_transformed %>%
-        validate_output()
+        validate_output(refs = df_refs, content = F)
 
       # Validation Errors
       output$submFilesList <- DT::renderDataTable({
@@ -566,7 +575,7 @@ library(glue)
       output$submFilesData <- DT::renderDataTable({
         DT::datatable(
           df_validated$data,
-          colnames = str_to_upper(str_replace_all(names(df_imports_data), "_", " ")),
+          colnames = str_to_upper(str_replace_all(names(df_validated$data), "_", " ")),
           filter = "top",
           height = "300px",
           options = list(

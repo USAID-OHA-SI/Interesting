@@ -1,6 +1,6 @@
 #' @title Transform CIR Data Frame
 #'
-#' @node This can also be accomplished with `cir_gather()` + `cir_munge_string()`
+#' @note This can also be accomplished with `cir_gather()` + `cir_munge_string()`
 #'
 #' @param df CIR raw and restricted data frame
 #'
@@ -30,7 +30,7 @@ cir_gather <- function(df){
 
   # identify data columns
   meta_cols <- c("filename", "sheet", "row_id")
-  core_cols <- c(template_cols_meta, meta_cols)
+  core_cols <- c(meta_cols, template_cols_meta)
 
   data_cols <- setdiff(names(df), core_cols)
 
@@ -40,8 +40,8 @@ cir_gather <- function(df){
                         names_to = "indicator_code",
                         values_to = "val")
 
-  # seperate former col names into indicator & disaggregates
-  if(any(stringr::str_detect(df$indicator_code, "[\\.]+"))) {
+  # Separate former col names into indicator & disaggregates
+  if(any(stringr::str_detect(df$indicator_code, ".n"))) {
 
     df <- tidyr::separate(
       df,

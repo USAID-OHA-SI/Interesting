@@ -1,7 +1,7 @@
 #' Setup processing folders
 #'
-#' @param folder
-#' @param dt
+#' @param folder Folder path used for CIRG Data processing
+#' @param dt     Processing date. If null, current date is used
 #'
 #' @export
 #'
@@ -575,12 +575,20 @@ na_to_chr <- function(obj) {
 #' Return none if vector/list is empty
 #'
 #' @param obj text to be printed
+#' @param type Type of the object, default set to atomic (vector or list). Options are atomic or string
 #' @export
 #'
-empty_to_chr <- function(obj) {
-  ifelse(purrr::is_empty(obj), "None", paste0(obj, collapse = ", "))
+empty_to_chr <- function(obj, type = "atomic") {
+  if (type == "atomic") {
+    ifelse(purrr::is_empty(obj), "None", paste0(obj, collapse = ", "))
+  }
+  else if (type == "string") {
+    ifelse(base::is.character(obj) & base::nchar(obj) == 0, "None", obj)
+  }
+  else {
+    base::toString(obj)
+  }
 }
-
 
 #' Paint console text in red
 #'

@@ -7,10 +7,16 @@
 datim_mechs(username, password, cntry, base_url = NULL)
 }
 \arguments{
-\item{username}{}
+\item{username}{Datim username}
+
+\item{password}{Datim password}
+
+\item{cntry}{Country name}
+
+\item{base_url}{Datim API Base URL}
 }
 \value{
-OU Orgunit as data frame
+OU Mechanisms as data frame
 }
 \description{
 Pull Orgunits

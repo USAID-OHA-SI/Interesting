@@ -15,7 +15,19 @@ datim_sqlviews(
 )
 }
 \arguments{
-\item{password}{}
+\item{username}{Datim username}
+
+\item{password}{Datim password}
+
+\item{view_name}{Datim SQLView name}
+
+\item{dataset}{Return SQLView dataset or uid? Default is false}
+
+\item{datauid}{Data UID}
+
+\item{query}{SQLView Query params, a list containing type and params key value pairs}
+
+\item{base_url}{Datim API Base URL}
 }
 \value{
 SQLView uid or dataset as data frame
