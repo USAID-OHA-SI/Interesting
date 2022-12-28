@@ -165,7 +165,7 @@ datim_orgunits <- function(username, password, cntry, base_url = NULL) {
 
   # get distinct levels
   cntry_levels <- pepfar_countries %>%
-    dplyr::filter(country == meta$ou) %>%
+    dplyr::filter(country == cntry) %>%
     dplyr::select(ends_with("_lvl")) %>%
     tidyr::pivot_longer(cols = ends_with("_lvl"),
                         names_to = "orgunit_label",

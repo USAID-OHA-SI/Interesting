@@ -226,10 +226,34 @@
   df_vout$checks
   df_vout$data
 
+  df_vout$checks %>%
+    tidyr::pivot_longer(cols = !c(filename, sheet),
+                        names_to = "validations",
+                        values_to = "location") %>%
+    dplyr::filter(!is.na(location) & location != "") %>%
+    tidyr::separate_rows(location, sep = ", ") %>%
+    dplyr::filter(!is.na(location)) %>%
+    mutate(location = as.double(location)) %>%
+    dplyr::left_join(
+      df_vout$data, .,
+      by = c("filename", "sheet", "row_id" = "location")) %>%
+    dplyr::filter(is.na(validations)) %>%
+    dplyr::select(-validations)
+
   # Import, Import Validations, Transformations, Content Validation
   df_subm <- subms %>%
     dplyr::first() %>%
-    cir_processing()
+    cir_processing(vcontent = F, archive = F)
+
+  df_subm <- subms %>%
+    dplyr::first() %>%
+    cir_processing(archive = F,
+                   vcontent = T,
+                   base_url = "https://datim.org")
+
+  df_subm <- subms %>%
+    dplyr::first() %>%
+    cir_processing(archive = T, vcontent = F)
 
 
 

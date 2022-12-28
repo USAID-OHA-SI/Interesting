@@ -34,7 +34,7 @@ validate_output <- function(df, refs, content=FALSE){
   pd_mism <- df %>%
     dplyr::rowwise() %>%
     dplyr::filter(!is.na(reportingperiod)) %>%
-    dplyr::mutate(pd_mism = reportingperiod != refs$pd) %>%
+    dplyr::mutate(pd_mism = reportingperiod != stringr::str_remove_all(refs$pd, " ")) %>%
     dplyr::ungroup() %>%
     dplyr::filter(pd_mism) %>%
     dplyr::distinct(row_id) %>%
@@ -142,7 +142,8 @@ validate_output <- function(df, refs, content=FALSE){
 
   if (interactive()) {
     cat("\nOperaringunit: ", empty_to_chr(vout$ou_valid, type="string"),
-        "\nReporting Period: ", empty_to_chr(vout$pd_valid, type="string"),
+        "\nReporting Period (format): ", empty_to_chr(vout$pd_format, type="string"),
+        "\nReporting Period (out of bound): ", empty_to_chr(vout$pd_mismatch, type="string"),
         "\nOrgunit: ", empty_to_chr(vout$org_valid, type="string"),
         "\nMechanisms: ", empty_to_chr(vout$mech_valid, type="string"),
         "\nIndicator: ", empty_to_chr(vout$ind_valid, type="string"),

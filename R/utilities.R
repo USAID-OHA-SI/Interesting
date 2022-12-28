@@ -130,8 +130,14 @@ cir_archive <- function(.subm) {
   # archive directories
   dir_arch <- cir_folder(type = "archive", dt = pdate)
 
-  fs::file_move(path = filepath,
-                new_path = file.path(dir_arch, basename(filepath)))
+  destpath <- file.path(dir_arch, basename(.subm))
+
+  fs::file_move(path = .subm,
+                new_path = destpath)
+
+  if (interactive()) {
+    usethis::ui_info("Submission has been archived to: {destpath}")
+  }
 }
 
 
