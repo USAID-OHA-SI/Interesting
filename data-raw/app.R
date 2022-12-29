@@ -1,4 +1,5 @@
 library(shiny)
+library(shinyjs)
 library(shinythemes)
 library(tidyverse)
 library(glamr)
@@ -25,6 +26,7 @@ library(glue)
 
     # Navigation Bar & Pages ----
     navbarPage(
+      useShinyjs(),
       id = "mainMenu",
       fluid = TRUE,
       collapsible = TRUE,
@@ -61,7 +63,7 @@ library(glue)
               width = 12,
               fileInput(
                 inputId = "submRaw",
-                label = "Select CIRG Submission file(s) to start ...",
+                label = "Select CIRG Submission file(s) to start processing ...",
                 multiple = TRUE,
                 accept = ".xlsx",
                 width = NULL,
@@ -75,47 +77,48 @@ library(glue)
               # Process files
               actionButton(
                 inputId = "getSubmMeta",
-                label="Metadata",
-                icon = icon("info")
+                label="Check metadata",
+                icon = icon("info"),
+                disabled = ""
               ),
               # Read Contents
-              actionButton(
+              hidden(actionButton(
                 inputId = "importSubm",
-                label="Import",
+                label="Import data",
                 icon = icon("table")
-              ),
+              )),
               # Augment Contents
-              actionButton(
+              hidden(actionButton(
                 inputId = "transformSubm",
                 label="Transform",
                 icon = icon("refresh")
-              ),
+              )),
               # Process files
-              actionButton(
+              hidden(actionButton(
                 inputId = "validateSubm",
                 label="Validate",
                 icon = icon("check")
-              ),
+              )),
               # Augment Contents
-              actionButton(
+              hidden(actionButton(
                 inputId = "augmentSubm",
                 label="Augment",
                 icon = icon("exchange")
-              ),
+              )),
               # Export Contents
-              actionButton(
-                inputId = "ingestSubm",
-                label="Ingest",
-                icon = icon("database")
-              ),
+              # hidden(actionButton(
+              #   inputId = "ingestSubm",
+              #   label="Ingest",
+              #   icon = icon("database")
+              # )),
               # Export Contents
-              actionButton(
+              hidden(actionButton(
                 inputId = "exportSubm",
                 label="Export",
                 icon = icon("share")
-              )
+              ))
             ),
-            # Submission notifications
+            # Submission notifications ----
             column(
               width = 12,
               tags$style(type="text/css", "#submNotification {padding-top: 10px;}"),
@@ -123,17 +126,18 @@ library(glue)
             )
           )
         ),
-        # File Status
+        # File Status ----
         fluidRow(
           column(
             width = 12,
-            uiOutput(outputId = "submProcessResults"),
+            uiOutput(outputId = "submListResults"),
             DT::dataTableOutput(outputId="submFilesList")
           ),
           column(
             width = 12,
             #tags$style(type="text/css", "#submFilesMeta {padding-top: 20px;}"),
-            DT::dataTableOutput(outputId="submFilesMeta")
+            uiOutput(outputId = "submProcessResults"),
+            DT::dataTableOutput(outputId="submFilesChecks")
           ),
           column(
             width = 12,
@@ -184,45 +188,86 @@ library(glue)
     # Home Page ----
     output$greeting <- renderText({
       #curr_date <- lubridate::ymd(Sys.Date())
-      paste0("Hello ", input$userName, "! Today's date is ", Sys.Date())
+      paste0("Hello ", input$userName, ", Today's date is ", Sys.Date(), "!")
     })
 
     # Submissions Page ----
 
+    # Process flow
+    proc_flow <- c(
+      "selection",
+      "metadata",
+      "import",
+      "transform",
+      "validate",
+      "augmente",
+      "export"
+    )
+
+    # Current position
+    curr_step <- NULL
+
+    # Reactive Values
+    rvalues <- reactiveValues(
+      subms = NULL,
+      metas = NULL,
+      imports = NULL,
+      transformed = NULL,
+      validated = NULL
+    )
+
     # List of selected submissions ----
 
     subm_files <- NULL
+    #subm_files <- reactive(input$submRaw)
 
     observeEvent(input$submRaw, {
       print("--- Selection of the submissions ---")
+
+      # file selected
+      subm_files <<- input$submRaw
+
+      # Current step
+      curr_step <- proc_flow[1]
 
       # Clear Error Messages
       output$submNotification <- renderUI({
         HTML(as.character(p("")))
       })
-
-      # Clear validations title
+      # Clear files list title
+      output$submListResults <- renderUI({
+        HTML(as.character(h4("")))
+      })
+      # Clear validations sections
       output$submProcessResults <- renderUI({
         HTML(as.character(h4("")))
       })
-      # Clear data title
+      output$submFilesChecks <- DT::renderDataTable({})
+
+      # Clear data sections
       output$submProcessData <- renderUI({
         HTML(as.character(h4("")))
       })
+      output$submFilesData <- DT::renderDataTable({})
 
+      # Disable Read Metadata button if no file selected
+      if (is.null(subm_files)) {
+        shinyjs::disable(id = "getSubmMeta")
+        return(NULL)
+      }
 
-      if (is.null(input$submRaw)) return(NULL)
-
-      # Save for other processes
-      subm_files <<- input$submRaw
+      # Enable Read Metadata
+      shinyjs::enable(id = "getSubmMeta")
 
       # Update header
-      output$submProcessResults <- renderUI(
-        HTML(as.character(h4("Selected submission(s) details")))
+      output$submListResults <- renderUI(
+        HTML(as.character(h4("Submission(s) details")))
       )
 
       # Reformat files list for datatable
       output$submFilesList <- DT::renderDataTable({
+
+        # Transform selected data
         tbl_subm_files <- subm_files %>%
           mutate(type = tools::file_ext(datapath),
                  id = row_number()) %>%
@@ -251,21 +296,37 @@ library(glue)
     observeEvent(input$getSubmMeta, {
       print("--- Metadata of the submissions ---")
 
+      # Current step
+      curr_step <- proc_flow[2]
+
+      # Hide import buttons
+      shinyjs::hideElement(id = "importSubm")
+      shinyjs::hideElement(id = "transformSubm")
+      shinyjs::hideElement(id = "validateSubm")
+      shinyjs::hideElement(id = "augmentSubm")
+      shinyjs::hideElement(id = "exportSubm")
+
+      # Check if submission is selected
+      # TODO - This should not be executed given that button should be hidden
       if (is.null(subm_files)) {
         # Error
         output$submNotification <- renderUI({
-          HTML(as.character(p("ERROR - No submission file selected.",
-                              style = "color:red")))
+          HTML(as.character(
+            p("ERROR - No submission file selected.", style = "color:red"))
+          )
         })
 
-        # Clear validations title
+        # Clear validations section
         output$submProcessResults <- renderUI({
           HTML(as.character(h4("")))
         })
-        # Clear data title
+        output$submFilesChecks <- DT::renderDataTable({})
+
+        # Clear data selection
         output$submProcessData <- renderUI({
           HTML(as.character(h4("")))
         })
+        output$submFilesData <- DT::renderDataTable({})
 
         return(NULL)
       }
@@ -275,7 +336,7 @@ library(glue)
 
       # Update validations header
       output$submProcessResults <- renderUI({
-        HTML(as.character(h4("Selected submission(s) initial validation results")))
+        HTML(as.character(h4("Initial validations results")))
       })
 
       # Clear data header
@@ -285,7 +346,7 @@ library(glue)
 
       # Overwrite file list
       # Extract metadata and run initial validations
-      output$submFilesList <- DT::renderDataTable({
+      output$submFilesChecks <- DT::renderDataTable({
 
         tbl_subm_files <- subm_files %>%
           mutate(filename = basename(datapath)) %>%
@@ -316,7 +377,7 @@ library(glue)
           fnames <- paste(i_files, collapse = ", ")
 
           output$submNotification <- renderUI({
-            HTML(as.character(p(glue("WARNING - These submission file(s) have some errors and can not be imported: {fnames}"),
+            HTML(as.character(p(glue("WARNING - Submission(s) with errors: {fnames}"),
                                 style = glue("color:{glitr::burnt_sienna}"))))
           })
         }
@@ -331,8 +392,7 @@ library(glue)
             dom = "tlpi",
             scrollX = TRUE,
             scrollY = TRUE
-          )
-        ) %>%
+          )) %>%
           DT::formatStyle(
             columns = "filename",
             valueColumns = "subm_valid",
@@ -346,8 +406,10 @@ library(glue)
 
       # Clear subm data table
       output$submFilesData <- DT::renderDataTable({NULL})
-    })
 
+      # Show Import Button
+      shinyjs::showElement(id = "importSubm")
+    })
 
     # Imports Pre-validated Submissions ----
 
@@ -356,14 +418,25 @@ library(glue)
     observeEvent(input$importSubm, {
       print("--- Import of the submissions ---")
 
+      # Current step
+      curr_step <- proc_flow[3]
+
+      # Hide import buttons
+      shinyjs::hideElement(id = "transformSubm")
+      shinyjs::hideElement(id = "validateSubm")
+      shinyjs::hideElement(id = "augmentSubm")
+
+      # Check dependencies
       if (is.null(df_metas)) {
         output$submNotification <- renderUI({
           HTML(as.character(p("ERROR - Make sure submission files are uploaded and pre-validated before proceeding with the ingestion.",
                               style = "color:red")))
         })
+
         return(NULL)
       }
 
+      # Clear Notification
       output$submNotification <- renderUI({
         HTML(as.character(p("")))
       })
@@ -381,22 +454,26 @@ library(glue)
 
       v_files <- df_valids %>% pull(filename)
 
-      if (length(v_files) > 0) {
-        output$submNotification <- renderUI({
-          HTML(as.character(p(glue("INFO - Files imported: {paste(v_files, collapse=', ')}"),
-                              style = glue("color:{glitr::genoa}"))))
-        })
-      } else {
+      if (length(v_files) == 0) {
+
+        # Notification
         output$submNotification <- renderUI({
           HTML(as.character(p("ERROR - No valid submission to ingest. Try fixing the errors.",
                               style = glue("color:{glitr::usaid_red}"))))
         })
+
         return(NULL)
       }
 
+      # Notification
+      output$submNotification <- renderUI({
+        HTML(as.character(p(glue("INFO - Files imported: {paste(v_files, collapse=', ')}"),
+                            style = glue("color:{glitr::genoa}"))))
+      })
+
       # Update header - Checks
       output$submProcessResults <- renderText({
-        HTML(as.character(h4("Selected submission(s) ingestion validation results")))
+        HTML(as.character(h4("Import validations results")))
       })
 
       # Import data from submission files
@@ -421,20 +498,25 @@ library(glue)
         }) %>%
         relocate(sheet, row_id, .after = filename)
 
-      if (nrow(df_imports_data > 0)) {
-        # Update header - Data
-        output$submProcessData <- renderText({
-          HTML(as.character(h4("Selected submission(s) raw data")))
-        })
-      }
-      else {
+      print(df_imports_data)
+
+      if (nrow(df_imports_data == 0)) {
+
         output$submNotification <- renderUI({
           HTML(as.character(p("ERROR - Unable to import data. See validations results for errors."),
                             style = "color:red"))
         })
+
+        return(NULL)
       }
 
-      output$submFilesList <- DT::renderDataTable({
+      # Update header - Data
+      output$submProcessData <- renderText({
+        HTML(as.character(h4("Imported raw data")))
+      })
+
+      # Render validations table
+      output$submFilesChecks <- DT::renderDataTable({
         DT::datatable(
           df_imports_checks,
           colnames = str_to_upper(str_replace_all(names(df_imports_checks), "_", " ")),
@@ -444,11 +526,11 @@ library(glue)
             dom = "tlpi",
             scrollX = TRUE,
             scrollY = "250px"
-          )
-        ) %>%
+          )) %>%
           DT::formatStyle(TRUE, 'vertical-align'='top')
       })
 
+      # Render data table
       output$submFilesData <- DT::renderDataTable({
         DT::datatable(
           df_imports_data,
@@ -459,10 +541,12 @@ library(glue)
             dom = "tlpi",
             scrollX = TRUE,
             scrollY = "300px"
-          )
-        ) %>%
+          )) %>%
           DT::formatStyle(TRUE, 'vertical-align'='top')
       })
+
+      # Show
+      shinyjs::showElement(id = "transformSubm")
     })
 
     # Transform Submissions ----
@@ -472,14 +556,25 @@ library(glue)
     observeEvent(input$transformSubm, {
       print("--- Transformation of the submissions ---")
 
+      # Current step
+      curr_step <- proc_flow[4]
+
+      # Hide import buttons
+      shinyjs::hideElement(id = "validateSubm")
+      shinyjs::hideElement(id = "augmentSubm")
+      shinyjs::hideElement(id = "exportSubm")
+
+      # Check dependencies
       if (is.null(df_imports)) {
         output$submNotification <- renderUI({
           HTML(as.character(p("ERROR - Make sure submission data have been imported before proceeding with the transformation",
                               style = "color:red")))
         })
+
         return(NULL)
       }
 
+      # Notification
       output$submNotification <- renderUI({
         HTML(as.character(p("")))
       })
@@ -495,13 +590,8 @@ library(glue)
         cir_gather() %>%
         cir_munge_string()
 
-      if (nrow(df_transformed > 0)) {
-        # Update header - Data
-        output$submProcessData <- renderText({
-          HTML(as.character(h4("Selected submission(s) transformed data")))
-        })
-      }
-      else {
+      # Check data
+      if (nrow(df_transformed == 0)) {
         output$submNotification <- renderUI({
           HTML(as.character(p("ERROR - Unable to reshape data. See validations results for errors."),
                             style = "color:red"))
@@ -510,6 +600,12 @@ library(glue)
         return(null)
       }
 
+      # Update header - Data
+      output$submProcessData <- renderText({
+        HTML(as.character(h4("Transformed data")))
+      })
+
+      # Render Transformed Data
       output$submFilesData <- DT::renderDataTable({
         DT::datatable(
           df_transformed,
@@ -523,6 +619,9 @@ library(glue)
           )
         )
       })
+
+      # Show Validate Button
+      shinyjs::showElement(id = "validateSubm")
     })
 
     # Validate Submissions' Content ----
@@ -532,14 +631,24 @@ library(glue)
     observeEvent(input$validateSubm, {
       print("--- Validation of the submissions ---")
 
+      # Current step
+      curr_step <- proc_flow[5]
+
+      # Hide import buttons
+      shinyjs::hideElement(id = "augmentSubm")
+      shinyjs::hideElement(id = "exportSubm")
+
+      # Check dependencies
       if (is.null(df_transformed)) {
         output$submNotification <- renderUI({
           HTML(as.character(p("ERROR - Make sure submission data have been transformed before proceeding with the content validation.",
                               style = "color:red")))
         })
+
         return(NULL)
       }
 
+      # Notification
       output$submNotification <- renderUI({
         HTML(as.character(p("")))
       })
@@ -547,6 +656,7 @@ library(glue)
       # Get refs datasets
       df_refs <- list(
         ou = df_metas$ou,
+        pd = df_metas$period,
         orgs = NULL,
         mechs = NULL,
         de = NULL
@@ -557,7 +667,7 @@ library(glue)
         validate_output(refs = df_refs, content = F)
 
       # Validation Errors
-      output$submFilesList <- DT::renderDataTable({
+      output$submFilesChecks <- DT::renderDataTable({
         DT::datatable(
           df_validated$checks,
           colnames = str_to_upper(str_replace_all(names(df_validated$checks), "_", " ")),
@@ -585,6 +695,9 @@ library(glue)
           )
         )
       })
+
+      # Show augment button
+      shinyjs::showElement(id = "augmentSubm")
     })
 
   }
