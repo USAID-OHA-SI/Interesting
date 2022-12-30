@@ -71,6 +71,12 @@ library(glue)
                 placeholder = "No file selected"
               )
             ),
+            # Processing flow indicator ----
+            column(
+              width = 12,
+              tags$style(type="text/css", "#procFlow {padding-top: 1px;}"),
+              uiOutput(outputId = "procFlow")
+            ),
             # 1: Process input files ----
             column(
               width = 12,
@@ -193,28 +199,46 @@ library(glue)
 
     # Submissions Page ----
 
-    # Process flow
-    proc_flow <- c(
-      "selection",
-      "metadata",
-      "import",
-      "transform",
-      "validate",
-      "augmente",
-      "export"
-    )
-
-    # Current position
-    curr_step <- NULL
-
     # Reactive Values
     rvalues <- reactiveValues(
       subms = NULL,
       metas = NULL,
       imports = NULL,
       transformed = NULL,
-      validated = NULL
+      validated = NULL,
+      curr_step = NULL
     )
+
+    # Process flow
+    proc_flow <- c(
+      "selection",
+      "metadata",
+      "import",
+      "transformation",
+      "validation",
+      "augmentation",
+      "export"
+    )
+
+    # Generate current position
+    curr_pos <- reactive({
+      if(is.null(rvalues$curr_step)) return("")
+
+      pos <- which(proc_flow == rvalues$curr_step)
+
+      flow <- proc_flow[1:pos] %>%
+        stringr::str_to_sentence() %>%
+        paste(c(1:pos), ., collapse = " => ")
+
+      print(flow)
+
+      return(flow)
+    })
+
+    # Processing flow
+    output$procFlow <- renderUI({
+      HTML(as.character(h4(curr_pos())))
+    })
 
     # List of selected submissions ----
 
@@ -228,7 +252,7 @@ library(glue)
       subm_files <<- input$submRaw
 
       # Current step
-      curr_step <- proc_flow[1]
+      rvalues$curr_step <- proc_flow[1]
 
       # Clear Error Messages
       output$submNotification <- renderUI({
@@ -297,7 +321,7 @@ library(glue)
       print("--- Metadata of the submissions ---")
 
       # Current step
-      curr_step <- proc_flow[2]
+      rvalues$curr_step <- proc_flow[2]
 
       # Hide import buttons
       shinyjs::hideElement(id = "importSubm")
@@ -419,7 +443,7 @@ library(glue)
       print("--- Import of the submissions ---")
 
       # Current step
-      curr_step <- proc_flow[3]
+      rvalues$curr_step <- proc_flow[3]
 
       # Hide import buttons
       shinyjs::hideElement(id = "transformSubm")
@@ -555,7 +579,7 @@ library(glue)
       print("--- Transformation of the submissions ---")
 
       # Current step
-      curr_step <- proc_flow[4]
+      rvalues$curr_step <- proc_flow[4]
 
       # Hide import buttons
       shinyjs::hideElement(id = "validateSubm")
@@ -629,7 +653,7 @@ library(glue)
       print("--- Validation of the submissions ---")
 
       # Current step
-      curr_step <- proc_flow[5]
+      rvalues$curr_step <- proc_flow[5]
 
       # Hide import buttons
       shinyjs::hideElement(id = "augmentSubm")
