@@ -471,11 +471,6 @@ library(glue)
                             style = glue("color:{glitr::genoa}"))))
       })
 
-      # Update header - Checks
-      output$submProcessResults <- renderText({
-        HTML(as.character(h4("Import validations results")))
-      })
-
       # Import data from submission files
       df_imports <<- df_valids %>%
         select(datapath, subm_type) %>%
@@ -498,9 +493,7 @@ library(glue)
         }) %>%
         relocate(sheet, row_id, .after = filename)
 
-      print(df_imports_data)
-
-      if (nrow(df_imports_data == 0)) {
+      if (nrow(df_imports_data) == 0) {
 
         output$submNotification <- renderUI({
           HTML(as.character(p("ERROR - Unable to import data. See validations results for errors."),
@@ -510,9 +503,9 @@ library(glue)
         return(NULL)
       }
 
-      # Update header - Data
-      output$submProcessData <- renderText({
-        HTML(as.character(h4("Imported raw data")))
+      # Update header - Checks
+      output$submProcessResults <- renderText({
+        HTML(as.character(h4("Import validations results")))
       })
 
       # Render validations table
@@ -528,6 +521,11 @@ library(glue)
             scrollY = "250px"
           )) %>%
           DT::formatStyle(TRUE, 'vertical-align'='top')
+      })
+
+      # Update header - Data
+      output$submProcessData <- renderText({
+        HTML(as.character(h4("Imported raw data")))
       })
 
       # Render data table
@@ -587,11 +585,10 @@ library(glue)
             select(-filename) %>%
             select(filename = name, everything())
         }) %>%
-        cir_gather() %>%
-        cir_munge_string()
+        cir_reshape()
 
       # Check data
-      if (nrow(df_transformed == 0)) {
+      if (nrow(df_transformed) == 0) {
         output$submNotification <- renderUI({
           HTML(as.character(p("ERROR - Unable to reshape data. See validations results for errors."),
                             style = "color:red"))
@@ -666,6 +663,17 @@ library(glue)
       df_validated <<- df_transformed %>%
         validate_output(refs = df_refs, content = F)
 
+      # Notification
+      output$submNotification <- renderUI({
+        HTML(as.character(p(glue("Output validations - {df_validated$status} - {df_validated$message}"),
+                            style = glue("color:{glitr::burnt_sienna}"))))
+      })
+
+      # Update header - Data
+      output$submProcessResults <- renderText({
+        HTML(as.character(h4("Ouput validations results")))
+      })
+
       # Validation Errors
       output$submFilesChecks <- DT::renderDataTable({
         DT::datatable(
@@ -679,6 +687,11 @@ library(glue)
             scrollY = "300px"
           )
         )
+      })
+
+      # Update header - Data
+      output$submProcessData <- renderText({
+        HTML(as.character(h4("Validated data")))
       })
 
       # Validated Data
