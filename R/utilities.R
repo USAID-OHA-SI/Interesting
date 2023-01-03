@@ -6,7 +6,6 @@
 #' @export
 #'
 cir_setup <- function(folder = "cirg-submissions", dt = NULL) {
-
   # Date
   curr_dt <- ifelse(
     is.null(dt),
@@ -15,8 +14,9 @@ cir_setup <- function(folder = "cirg-submissions", dt = NULL) {
   )
 
   # Processing folder
-  if (!base::dir.exists(file.path(".", folder)))
+  if (!base::dir.exists(file.path(".", folder))) {
     base::dir.create(file.path(".", folder))
+  }
 
   # Current Processing folder
   dir_curr_proc <- file.path(".", folder) %>%
@@ -25,7 +25,8 @@ cir_setup <- function(folder = "cirg-submissions", dt = NULL) {
   dir_curr_proc %>% base::dir.create()
 
   # Sub-folders
-  df_subfolders <- c("reference",
+  df_subfolders <- c(
+    "reference",
     "raw",
     "metadata",
     "validations",
@@ -33,13 +34,14 @@ cir_setup <- function(folder = "cirg-submissions", dt = NULL) {
     "transformed",
     "cleaned",
     "final",
-    "archive") %>%
+    "archive"
+  ) %>%
     tibble::tibble(folder = .) %>%
     dplyr::mutate(order = row_number() - 1)
 
   # Create all sub-folders
   df_subfolders %>%
-    purrr::pwalk(~base::dir.create(
+    purrr::pwalk(~ base::dir.create(
       path = base::file.path(".", dir_curr_proc, paste0(.y, "-", .x))
     ))
 }
@@ -55,8 +57,9 @@ cir_setup <- function(folder = "cirg-submissions", dt = NULL) {
 cir_folder <- function(type = "raw", dt = NULL) {
   # Date
   curr_dt <- ifelse(is.null(dt),
-                    base::format(base::Sys.Date(), "%Y-%m-%d"),
-                    dt)
+    base::format(base::Sys.Date(), "%Y-%m-%d"),
+    dt
+  )
 
   # Processing folder
   folder <- base::file.path(paste0("./cirg-submissions/CIRG-", curr_dt)) %>%
@@ -82,7 +85,6 @@ cir_folder <- function(type = "raw", dt = NULL) {
 #'
 cir_output <- function(.df_out, .subm, .name,
                        type = "metadata") {
-
   # Process Date
   pdate <- .subm %>%
     dirname() %>%
@@ -119,7 +121,6 @@ cir_output <- function(.df_out, .subm, .name,
 #' @export
 #'
 cir_archive <- function(.subm) {
-
   # Process Date
   pdate <- .subm %>%
     dirname() %>%
@@ -132,8 +133,10 @@ cir_archive <- function(.subm) {
 
   destpath <- file.path(dir_arch, basename(.subm))
 
-  fs::file_move(path = .subm,
-                new_path = destpath)
+  fs::file_move(
+    path = .subm,
+    new_path = destpath
+  )
 
   if (interactive()) {
     usethis::ui_info("Submission has been archived to: {destpath}")
@@ -149,7 +152,6 @@ cir_archive <- function(.subm) {
 #' @export
 #'
 cir_vsheets <- function(.subm) {
-
   # Notification
   # if(base::interactive())
   #   usethis::ui_info("Checking worksheets visibility for: {.subm}")
@@ -161,7 +163,8 @@ cir_vsheets <- function(.subm) {
     openxlsx::getSheetNames() %>%
     tibble::tibble(
       filename = base::basename(.subm),
-      name = .) %>%
+      name = .
+    ) %>%
     dplyr::mutate(
       visibility = openxlsx::sheetVisibility(wb)
     )
@@ -179,24 +182,26 @@ cir_vsheets <- function(.subm) {
 #'
 #' @examples
 #' \dontrun{
-#' #identify whether template is long or wide
-#'   filepath <- "~/WeeklyData/Raw/KEN_Weekly.xlsx"
-#'   cir_extract_meta(filepath, meta_type = "type")
-#' #identify period
-#'   cir_extract_meta(filepath, meta_type = "period")
-#' #identify OU
-#'   cir_extract_meta(filepath, meta_type = "ou") }
-
-cir_extract_meta <- function(filepath, meta_type = NULL){
-
-  if(!is_metatab(filepath))
+#' # identify whether template is long or wide
+#' filepath <- "~/WeeklyData/Raw/KEN_Weekly.xlsx"
+#' cir_extract_meta(filepath, meta_type = "type")
+#' # identify period
+#' cir_extract_meta(filepath, meta_type = "period")
+#' # identify OU
+#' cir_extract_meta(filepath, meta_type = "ou")
+#' }
+#'
+cir_extract_meta <- function(filepath, meta_type = NULL) {
+  if (!is_metatab(filepath)) {
     return(NA)
+  }
 
   # Read meta sheet
   metatable <- readxl::read_excel(
     path = filepath,
-    #sheet = "meta",
-    range = "meta!B1:E2") %>%
+    # sheet = "meta",
+    range = "meta!B1:E2"
+  ) %>%
     utils::stack() %>%
     dplyr::rename(mvalue = values, mtype = ind) %>%
     dplyr::select(mtype, mvalue)
@@ -210,11 +215,12 @@ cir_extract_meta <- function(filepath, meta_type = NULL){
       mtype = base::tolower(mtype)
     )
 
-  if (base::is.null(meta_type))
+  if (base::is.null(meta_type)) {
     return(metatable)
+  }
 
   # Extract specified value
-  meta <- metatable%>%
+  meta <- metatable %>%
     dplyr::filter(mtype == meta_type) %>%
     dplyr::pull()
 
@@ -233,30 +239,36 @@ cir_extract_meta <- function(filepath, meta_type = NULL){
 #'
 #' @examples
 #' \dontrun{
-#' # meta_df <- cir_store_meta(filepath)}
-
-cir_store_meta <- function(filepath){
-
-  if(is_metatab(filepath)){
+#' # meta_df <- cir_store_meta(filepath)
+#' }
+#'
+cir_store_meta <- function(filepath) {
+  if (is_metatab(filepath)) {
     metatable <- readxl::read_excel(filepath, range = "meta!B1:E2") %>% # BK - What if the meta tab is moved?
       stack() %>%
-      rename(mvalue = values,
-             mtype = ind) %>%
+      rename(
+        mvalue = values,
+        mtype = ind
+      ) %>%
       select(mtype, mvalue)
 
     meta_df <- metatable %>%
-      dplyr::mutate(mtype =
-                      stringr::str_remove_all(mtype,
-                                              "Template |CIRG Reporting |, eg 2020.1|perating |nit|\\/Country|\r\n")
-                    %>% tolower,
-                    mtype = stringr::str_c(mtype, "_meta")) %>%
+      dplyr::mutate(
+        mtype =
+          stringr::str_remove_all(
+            mtype,
+            "Template |CIRG Reporting |, eg 2020.1|perating |nit|\\/Country|\r\n"
+          )
+          %>% tolower(),
+        mtype = stringr::str_c(mtype, "_meta")
+      ) %>%
       tidyr::pivot_wider(names_from = mtype, values_from = mvalue) %>%
-      dplyr::mutate(filepaths = basename(filepath),
-                    file_size = file.size(filepath),
-                    google_id = NA,
-                    period_meta = str_replace(period_meta, pattern=" ", repl=""))
-
-
+      dplyr::mutate(
+        filepaths = basename(filepath),
+        file_size = file.size(filepath),
+        google_id = NA,
+        period_meta = str_replace(period_meta, pattern = " ", repl = "")
+      )
   } else {
     meta_df <- NA
   }
@@ -274,35 +286,38 @@ cir_store_meta <- function(filepath){
 #'
 #' @examples
 #' \dontrun{
-#' tmp = "Semi-wide"
-#' tmp_cols <- cir_template_cols(df, template = tmp)}
-
+#' tmp <- "Semi-wide"
+#' tmp_cols <- cir_template_cols(df, template = tmp)
+#' }
+#'
 cir_template_cols <- function(df_cir, template = "long") {
-
   req_cols <- NULL
 
   # Long
-  if(template == "Long" & var_exists(df_cir, template_cols_long)) {
+  if (template == "Long" & var_exists(df_cir, template_cols_long)) {
     req_cols <- template_cols_long
   }
 
   # Semi-wide
-  if(template == "Semi-wide" &
-      var_exists(df_cir, c(template_cols_core, template_cols_disaggs)) &
-      !var_exists(df_cir, template_cols_ind) &
-      var_exists(df_cir, setdiff(template_cols_semiwide,
-                                 c(template_cols_core, template_cols_disaggs)),
-                 all = FALSE)) {
+  if (template == "Semi-wide" &
+    var_exists(df_cir, c(template_cols_core, template_cols_disaggs)) &
+    !var_exists(df_cir, template_cols_ind) &
+    var_exists(df_cir, setdiff(
+      template_cols_semiwide,
+      c(template_cols_core, template_cols_disaggs)
+    ),
+    all = FALSE
+    )) {
     req_cols <- template_cols_semiwide
   }
 
   # Wide
-  if(template == "Wide" &
-      var_exists(df_cir, template_cols_core) &
-      !var_exists(df_cir, template_cols_ind) &
-      var_exists(df_cir, setdiff(template_cols_wide, template_cols_core),
-                 all = FALSE)) {
-
+  if (template == "Wide" &
+    var_exists(df_cir, template_cols_core) &
+    !var_exists(df_cir, template_cols_ind) &
+    var_exists(df_cir, setdiff(template_cols_wide, template_cols_core),
+      all = FALSE
+    )) {
     ta <- cir_template_ta(df_cir)
 
     req_cols <- ta %>%
@@ -354,13 +369,17 @@ cir_template_cols <- function(df_cir, template = "long") {
 #'
 #' @examples
 #' \dontrun{
-#' ta <- cir_template_ta(df)}
-
+#' ta <- cir_template_ta(df)
+#' }
+#'
 cir_template_ta <- function(df_cir) {
-
-  setdiff(names(df_cir),
-          c(template_cols_core, "indicator",
-            template_cols_disaggs)) %>%
+  setdiff(
+    names(df_cir),
+    c(
+      template_cols_core, "indicator",
+      template_cols_disaggs
+    )
+  ) %>%
     stringr::str_extract("[^.]+") %>%
     stringr::str_to_lower() %>%
     tibble::tibble(indicator = .) %>%
@@ -369,16 +388,24 @@ cir_template_ta <- function(df_cir) {
         indicator == "val" ~ "ALL",
         indicator %in% c("dreams_fp", "dreams_gend_norm") ~ "DREAMS",
         indicator %in% c("gend_gbv") ~ "GENDER",
-        indicator %in% c("ovc_enroll", "ovc_offer",
-                 "ovc_vl_eligible", "ovc_vlr", "ovc_cls") ~ "OVC",
-        indicator %in% c("tx_pvls_eligible", "tx_pvls_sample",
-                 "tx_pvls_result_returned",
-                 "pmtct_eid_eligible", "pmtct_eid_result_returned") ~ "LAB",
-        indicator %in% c("prep_screen", "prep_eligible", "prep_new_verify",
-                 "prep_1month", "prep_ct_verify") ~ "PrEP",
+        indicator %in% c(
+          "ovc_enroll", "ovc_offer",
+          "ovc_vl_eligible", "ovc_vlr", "ovc_cls"
+        ) ~ "OVC",
+        indicator %in% c(
+          "tx_pvls_eligible", "tx_pvls_sample",
+          "tx_pvls_result_returned",
+          "pmtct_eid_eligible", "pmtct_eid_result_returned"
+        ) ~ "LAB",
+        indicator %in% c(
+          "prep_screen", "prep_eligible", "prep_new_verify",
+          "prep_1month", "prep_ct_verify"
+        ) ~ "PrEP",
         indicator %in% c("sc_arvdisp", "sc_curr", "sc_lmis") ~ "SCH",
-        indicator %in% c("tx_new_verify", "tx_rtt_verify",
-                 "tx_curr_verify", "tx_pvls_verify") ~ "KP",
+        indicator %in% c(
+          "tx_new_verify", "tx_rtt_verify",
+          "tx_curr_verify", "tx_pvls_verify"
+        ) ~ "KP",
         indicator %in% c("vmmc_ae") ~ "VMMC",
         TRUE ~ NA_character_
       )
@@ -394,8 +421,7 @@ cir_template_ta <- function(df_cir) {
 #'
 #' @export
 
-cir_restrict_cols <- function(df){
-
+cir_restrict_cols <- function(df) {
   # defaults cols
   cols <- template_cols_core
 
@@ -413,7 +439,9 @@ cir_restrict_cols <- function(df){
     cols <- intersect(template_cols_wgroups[ta], names(df))
   }
 
-  if (is.null(cols)) return(NULL)
+  if (is.null(cols)) {
+    return(NULL)
+  }
 
   df <- dplyr::select_at(df, .vars = vars(all_of(cols)))
 
@@ -430,8 +458,8 @@ cir_restrict_cols <- function(df){
 
 var_exists <- function(df, var, all = TRUE) {
   if (all) {
-    all(var %in% names(df))}
-  else {
+    all(var %in% names(df))
+  } else {
     any(var %in% names(df))
   }
 }
@@ -455,11 +483,10 @@ var_matches <- function(df, pattern) {
 #'
 #' @export
 #'
-flag_missing <- function(required, submitted){
-
+flag_missing <- function(required, submitted) {
   missing <- setdiff(required, submitted)
 
-  if(length(missing) > 0){
+  if (length(missing) > 0) {
     missing <- crayon::yellow(missing)
   } else {
     missing <- crayon::green("No")
@@ -475,10 +502,9 @@ flag_missing <- function(required, submitted){
 #'
 #' @export
 
-flag_extra <- function(required, submitted){
-
+flag_extra <- function(required, submitted) {
   extra <- setdiff(submitted, required)
-  if(length(extra > 0)){
+  if (length(extra > 0)) {
     extra <- crayon::red(extra)
   } else {
     extra <- crayon::green("No")
@@ -495,20 +521,20 @@ flag_extra <- function(required, submitted){
 #' @param df data frame
 #' @param var variable to count missing values
 
-count_missing <- function(df, var){
-
+count_missing <- function(df, var) {
   nr <- nrow(df)
 
   missing <- df %>%
-    dplyr::filter(is.na({{var}})) %>%
+    dplyr::filter(is.na({{ var }})) %>%
     nrow()
 
-  missing_pct <- round(missing/nr, 2)*100
+  missing_pct <- round(missing / nr, 2) * 100
   missing_pct <- paste0("(", missing_pct, "%)")
 
   count <- ifelse(missing > 0,
-                  crayon::red(missing, "out of", NROW(df), "rows", missing_pct),
-                  crayon::green("No"))
+    crayon::red(missing, "out of", NROW(df), "rows", missing_pct),
+    crayon::green("No")
+  )
 
   return(count)
 }
@@ -519,8 +545,7 @@ count_missing <- function(df, var){
 #' @param df data frame
 #' @param var variable to count missing values
 
-get_missing <- function(df, var){
-
+get_missing <- function(df, var) {
   df_miss <- df
 
   if (!"row_id" %in% names(df_miss)) {
@@ -529,7 +554,7 @@ get_missing <- function(df, var){
   }
 
   df_miss %>%
-    dplyr::filter(is.na({{var}})) %>%
+    dplyr::filter(is.na({{ var }})) %>%
     dplyr::distinct(row_id) %>%
     dplyr::pull(row_id)
 }
@@ -541,8 +566,7 @@ get_missing <- function(df, var){
 #' @param df data frame
 #' @param var variable to count missing values
 
-match_value <- function(df, var, pattern = "FY\\d{2}Q\\d{1}"){
-
+match_value <- function(df, var, pattern = "FY\\d{2}Q\\d{1}") {
   df_miss <- df
 
   if (!"row_id" %in% names(df_miss)) {
@@ -551,8 +575,10 @@ match_value <- function(df, var, pattern = "FY\\d{2}Q\\d{1}"){
   }
 
   df_miss %>%
-    dplyr::filter(is.na({var})) %>%
-    dplyr::mutate(vmatch = stringr::str_match({{var}}, pattern)) %>%
+    dplyr::filter(is.na({
+      var
+    })) %>%
+    dplyr::mutate(vmatch = stringr::str_match({{ var }}, pattern)) %>%
     dplyr::filter(isFALSE(vmatch)) %>%
     dplyr::distinct(row_id) %>%
     dplyr::pull(row_id)
@@ -589,11 +615,9 @@ na_to_chr <- function(obj) {
 empty_to_chr <- function(obj, type = "atomic") {
   if (type == "atomic") {
     ifelse(purrr::is_empty(obj), "None", paste0(obj, collapse = ", "))
-  }
-  else if (type == "string") {
+  } else if (type == "string") {
     ifelse(base::is.character(obj) & base::nchar(obj) == 0, "None", obj)
-  }
-  else {
+  } else {
     base::toString(obj)
   }
 }
@@ -648,7 +672,6 @@ paint_yellow <- function(txt) {
 paint_ifna <- function(txt,
                        true_paint = crayon::yellow,
                        false_paint = crayon::blue) {
-
   ifelse(base::is.na(txt), true_paint(txt), false_paint(txt))
 }
 
@@ -662,7 +685,6 @@ paint_ifna <- function(txt,
 paint_ifempty <- function(txt,
                           true_paint = crayon::blue,
                           false_paint = crayon::yellow) {
-
   ifelse(toString(txt) == "", true_paint("None"), false_paint(txt))
 }
 
@@ -676,7 +698,6 @@ paint_ifempty <- function(txt,
 paint_ifnull <- function(obj,
                          true_paint = crayon::red,
                          false_paint = crayon::blue) {
-
   ifelse(base::is.null(obj), true_paint(obj), false_paint(obj))
 }
 
@@ -690,6 +711,5 @@ paint_ifnull <- function(obj,
 paint_iftrue <- function(value,
                          true_paint = crayon::green,
                          false_paint = crayon::red) {
-
   ifelse(base::isTRUE(value), true_paint(value), false_paint(value))
 }
