@@ -108,7 +108,7 @@
     dplyr::first() %>%
     validate_initial()
 
-  metas <- subms %>% map_dfr(validate_initial)
+  #metas <- subms %>% map_dfr(validate_initial)
 
   # Import & 2nd round of Validation
   df_subm <- subms %>%
@@ -117,6 +117,10 @@
 
   df_subm$checks %>% glimpse
   df_subm$data %>% glimpse
+
+  df_subm$checks %>%
+    mutate(across(where(is.logical), as.character)) %>%
+    cir_reshape_checks(vname = "value")
 
   # Import all
   # df_imp_checks <- NULL
@@ -134,10 +138,6 @@
 
   # Transformation
 
-  # df_trans <- df_subm$data %>%
-  #   cir_gather() %>%
-  #   cir_munge_string()
-
   df_trans <- df_subm$data %>%
     cir_reshape()
 
@@ -146,31 +146,31 @@
   # Template DataElement Pattern
   # <indicator>.<age>.<sex>.<otherdisaggs>.<population>.<numdenom>
 
-
   # Validate outputs -- Missing
 
-  df_trans %>% get_missing("operatingunit")
-  df_trans %>% get_missing("reportingperiod")
-  df_trans %>% match_value("reportingperiod", "FY\\d{2}Q\\d{1}")
-
-  curr_dt <- glamr::curr_date()
-
-  glamr::pepfar_data_calendar %>%
-    mutate(pd = paste0("FY", str_sub(fiscal_year, 3,4), "Q", quarter)) %>%
-    filter(entry_close <= curr_dt) %>%
-    distinct(pd) %>%
-    pull(pd) %>%
-    has_element("FY22Q4")
-
-  df_trans %>% get_missing("orgunituid")
-  df_trans %>% get_missing("mech_code")
-  df_trans %>% get_missing("indicator")
-  df_trans %>% get_missing("numeratordenom")
+  # df_trans %>% get_missing("operatingunit")
+  # df_trans %>% get_missing("reportingperiod")
+  # df_trans %>% match_value("reportingperiod", "FY\\d{2}Q\\d{1}")
+  #
+  # curr_dt <- glamr::curr_date()
+  #
+  # glamr::pepfar_data_calendar %>%
+  #   mutate(pd = paste0("FY", str_sub(fiscal_year, 3,4), "Q", quarter)) %>%
+  #   filter(entry_close <= curr_dt) %>%
+  #   distinct(pd) %>%
+  #   pull(pd) %>%
+  #   has_element("FY22Q4")
+  #
+  # df_trans %>% get_missing("orgunituid")
+  # df_trans %>% get_missing("mech_code")
+  # df_trans %>% get_missing("indicator")
+  # df_trans %>% get_missing("numeratordenom")
 
 
   # Validate outputs -- wrong values
 
-  df_orgs <- meta$ou %>%
+  #df_orgs <- meta$ou %>%
+  df_orgs <- "Ethiopia" %>%
     purrr::map_dfr(~datim_orgunits(
       username = glamr::datim_user(),
       password = glamr::datim_pwd(),
@@ -188,23 +188,23 @@
 
   df_mechs %>% glimpse()
 
-  df_trans %>%
-    check_operatingunit(ou = meta$ou)
-
-  df_trans %>%
-    check_orgunituids(ref_orgs = df_orgs)
-
-  df_trans %>%
-    check_mechs(ref_mechs = df_mechs)
-
-  df_trans %>%
-    check_inds(ref_de = data_elements)
-
-  df_trans %>%
-    check_numdenom()
-
-  df_trans %>%
-    check_disaggs(ref_de = data_elements)
+  # df_trans %>%
+  #   check_operatingunit(ou = meta$ou)
+  #
+  # df_trans %>%
+  #   check_orgunituids(ref_orgs = df_orgs)
+  #
+  # df_trans %>%
+  #   check_mechs(ref_mechs = df_mechs)
+  #
+  # df_trans %>%
+  #   check_inds(ref_de = data_elements)
+  #
+  # df_trans %>%
+  #   check_numdenom()
+  #
+  # df_trans %>%
+  #   check_disaggs(ref_de = data_elements)
 
   # ref datasets
   refs <- list(
@@ -226,13 +226,10 @@
   df_vout$checks
   df_vout$data
 
+  vname = "location"
+
   df_vout$checks %>%
-    tidyr::pivot_longer(cols = !c(filename, sheet),
-                        names_to = "validations",
-                        values_to = "location") %>%
-    dplyr::filter(!is.na(location) & location != "") %>%
-    tidyr::separate_rows(location, sep = ", ") %>%
-    dplyr::filter(!is.na(location)) %>%
+    cir_reshape_checks(vname = "location") %>%
     mutate(location = as.double(location)) %>%
     dplyr::left_join(
       df_vout$data, .,

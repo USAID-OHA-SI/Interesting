@@ -449,6 +449,31 @@ cir_restrict_cols <- function(df) {
 }
 
 
+#' @title Reshape Validation Checks data frame
+#'
+#' @param .df_checks CIR Processing checks as data frame
+#' @param vname      Column name to be used for values_to parameter of `pivot_longer()`
+#'
+#' @return Validation Checks in long format
+#' @export
+
+cir_reshape_checks <- function(.df_checks, vname = "location") {
+  .df_checks <- .df_checks %>%
+    tidyr::pivot_longer(cols = !c(filename, sheet),
+                        names_to = "validations",
+                        values_to = {{vname}}) %>%
+    dplyr::filter(!is.na(!!rlang::sym(vname)) & !!rlang::sym(vname) != "")
+
+  if (any(stringr::str_detect(dplyr::pull(.df_checks, !!rlang::sym(vname)), ","))) {
+    .df_checks <- .df_checks %>%
+      tidyr::separate_rows({{vname}}, sep = ", ")
+  }
+
+  .df_checks %>%
+    dplyr::filter(!is.na(!!rlang::sym(vname)) & !!rlang::sym(vname) != "")
+}
+
+
 
 #' Check if all variables exist
 #'

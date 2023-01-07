@@ -9,8 +9,6 @@ library(googledrive)
 library(googlesheets4)
 library(glue)
 
-
-
 # Global Options ----
 
   app_title <- "FEPFAR/USAID - Custom Indicators Reporting"
@@ -112,12 +110,6 @@ library(glue)
                 icon = icon("exchange")
               )),
               # Export Contents
-              # hidden(actionButton(
-              #   inputId = "ingestSubm",
-              #   label="Ingest",
-              #   icon = icon("database")
-              # )),
-              # Export Contents
               hidden(actionButton(
                 inputId = "exportSubm",
                 label="Export",
@@ -136,17 +128,19 @@ library(glue)
         fluidRow(
           column(
             width = 12,
+            tags$style(type="text/css", "#submFilesList {margin-bottom: 20px;}"),
             uiOutput(outputId = "submListResults"),
             DT::dataTableOutput(outputId="submFilesList")
           ),
           column(
             width = 12,
-            #tags$style(type="text/css", "#submFilesMeta {padding-top: 20px;}"),
+            tags$style(type="text/css", "#submFilesChecks {margin-bottom: 20px;}"),
             uiOutput(outputId = "submProcessResults"),
             DT::dataTableOutput(outputId="submFilesChecks")
           ),
           column(
             width = 12,
+            tags$style(type="text/css", "#submFilesData {margin-bottom: 20px;}"),
             uiOutput(outputId = "submProcessData"),
             DT::dataTableOutput(outputId="submFilesData")
           )
@@ -193,7 +187,6 @@ library(glue)
 
     # Home Page ----
     output$greeting <- renderText({
-      #curr_date <- lubridate::ymd(Sys.Date())
       paste0("Hello ", input$userName, ", Today's date is ", Sys.Date(), "!")
     })
 
@@ -648,6 +641,7 @@ library(glue)
     # Validate Submissions' Content ----
 
     df_validated <- NULL
+    df_refs <- NULL
 
     observeEvent(input$validateSubm, {
       print("--- Validation of the submissions ---")
@@ -675,12 +669,12 @@ library(glue)
       })
 
       # Get refs datasets
-      df_refs <- list(
+      df_refs <<- list(
         ou = df_metas$ou,
         pd = df_metas$period,
         orgs = NULL,
         mechs = NULL,
-        de = NULL
+        de = data_elements
       )
 
       # Validate Outputs
@@ -735,6 +729,37 @@ library(glue)
 
       # Show augment button
       shinyjs::showElement(id = "augmentSubm")
+    })
+
+    # Extend Submissions data ----
+
+    df_augmented <- NULL
+
+    observeEvent(input$augmenteSubm, {
+      print("--- Extending the submissions ---")
+
+      # Current step
+      rvalues$curr_step <- proc_flow[5]
+
+      # Hide import buttons
+      shinyjs::hideElement(id = "exportSubm")
+
+      # Check dependencies
+      if (is.null(df_validated)) {
+        output$submNotification <- renderUI({
+          HTML(as.character(p("ERROR - Make sure submission data have been validaded before adding reference datasets.",
+                              style = "color:red")))
+        })
+
+        return(NULL)
+      }
+
+      # Notification
+      output$submNotification <- renderUI({
+        HTML(as.character(p("")))
+      })
+
+
     })
 
   }
