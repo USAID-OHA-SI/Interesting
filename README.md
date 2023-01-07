@@ -8,7 +8,9 @@
 
 ### OHA Custom Indicators Reporting (CIR) 
 
-This project was setup to ingest, process and manage CIR data.
+Validate, ingest, process and manage CIR data.
+
+![submission page](https://user-images.githubusercontent.com/3952707/211133388-69b6353f-dd6d-4184-b661-3cd2cf05fdf7.PNG)
 
 ### Installation
 
