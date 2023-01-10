@@ -104,6 +104,18 @@
 
   # Initial Validation
 
+  subms %>%
+    dplyr::first() %>%
+    cir_extract_meta()
+
+  subms %>%
+    dplyr::first() %>%
+    check_meta()
+
+  subms %>%
+    dplyr::first() %>%
+    check_tabs()
+
   meta <- subms %>%
     dplyr::first() %>%
     validate_initial()
