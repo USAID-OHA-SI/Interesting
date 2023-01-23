@@ -213,7 +213,7 @@ library(glue)
       "export"
     )
 
-    # Generate current position
+    # Generate current position ----
     curr_pos <- reactive({
       if(is.null(rvalues$curr_step)) return("")
 
