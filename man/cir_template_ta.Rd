@@ -17,5 +17,7 @@ Extract Technical Areas
 }
 \examples{
 \dontrun{
-ta <- cir_template_ta(df)}
+ta <- cir_template_ta(df)
+}
+
 }

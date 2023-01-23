@@ -17,11 +17,13 @@ It be the Operating Unit (OU), Period, template version, or type, eg wide or lon
 }
 \examples{
 \dontrun{
-#identify whether template is long or wide
-  filepath <- "~/WeeklyData/Raw/KEN_Weekly.xlsx"
-  cir_extract_meta(filepath, meta_type = "type")
-#identify period
-  cir_extract_meta(filepath, meta_type = "period")
-#identify OU
-  cir_extract_meta(filepath, meta_type = "ou") }
+# identify whether template is long or wide
+filepath <- "~/WeeklyData/Raw/KEN_Weekly.xlsx"
+cir_extract_meta(filepath, meta_type = "type")
+# identify period
+cir_extract_meta(filepath, meta_type = "period")
+# identify OU
+cir_extract_meta(filepath, meta_type = "ou")
+}
+
 }

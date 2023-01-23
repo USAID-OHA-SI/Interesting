@@ -4,12 +4,27 @@
 \alias{cir_processing}
 \title{Process CIR Submissions}
 \usage{
-cir_processing(filepath, archive = FALSE)
+cir_processing(
+  filepath,
+  archive = FALSE,
+  vcontent = FALSE,
+  datim_user = NULL,
+  datim_pass = NULL,
+  base_url = NULL
+)
 }
 \arguments{
 \item{filepath}{Full path of filename}
 
-\item{archive}{Should the file be archvied if successfully processed? Default is false}
+\item{archive}{Should the file be archived if successfully processed? Default is false}
+
+\item{vcontent}{Should the content of submission be validated?}
+
+\item{datim_user}{Datim username}
+
+\item{datim_pass}{Datim password}
+
+\item{base_url}{Datim API Base URL}
 }
 \value{
 CIR Submission as Tibble

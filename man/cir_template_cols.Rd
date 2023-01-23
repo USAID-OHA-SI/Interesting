@@ -19,6 +19,8 @@ Validate template
 }
 \examples{
 \dontrun{
-tmp = "Semi-wide"
-tmp_cols <- cir_template_cols(df, template = tmp)}
+tmp <- "Semi-wide"
+tmp_cols <- cir_template_cols(df, template = tmp)
+}
+
 }

@@ -17,5 +17,7 @@ TODO - This seems similar to \code{cir_extract_meta} function. Try this for meta
 }
 \examples{
 \dontrun{
-# meta_df <- cir_store_meta(filepath)}
+# meta_df <- cir_store_meta(filepath)
+}
+
 }
