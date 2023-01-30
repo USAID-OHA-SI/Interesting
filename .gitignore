@@ -59,7 +59,9 @@ Data/*
 Images/*
 Graphics/*
 Documents/*
-
+cirg-submissions/*
+ou_submissions/*
+tableau/*
 data-raw/validations/*
 cirg-submissions/*
 ou_submissions/

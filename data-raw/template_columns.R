@@ -1,3 +1,4 @@
+
 # Template Types
 
   templates <- list(
@@ -7,6 +8,7 @@
   )
 
   usethis::use_data(templates, overwrite = TRUE)
+
 
 #Template Columns ------------------------------
 
