@@ -30,7 +30,8 @@ library(glue)
       collapsible = TRUE,
       title = nav_title,
       position = "fixed-top",
-      theme = shinytheme("cerulean"),#cerulean, spacelab, yeti, sandstone
+      #theme = shinytheme("cerulean"),
+      theme = shinytheme("yeti"), #spacelab, yeti, sandstone
       #footer = titlePanel(title = app_title),
       tags$style(type="text/css",
         "body {padding-top: 70px;}
@@ -72,7 +73,7 @@ library(glue)
             # Processing flow indicator ----
             column(
               width = 12,
-              tags$style(type="text/css", "#procFlow {padding-top: 1px;}"),
+              tags$style(type="text/css", "#procFlow {padding-bottom: 5px;}"),
               uiOutput(outputId = "procFlow")
             ),
             # 1: Process input files ----
@@ -81,38 +82,44 @@ library(glue)
               # Process files
               actionButton(
                 inputId = "getSubmMeta",
-                label="Check metadata",
+                class = "subm-action-btns",
+                label = "Check metadata",
                 icon = icon("info"),
                 disabled = ""
               ),
               # Read Contents
               hidden(actionButton(
                 inputId = "importSubm",
-                label="Import data",
+                class = "subm-action-btns",
+                label = "Import data",
                 icon = icon("table")
               )),
               # Augment Contents
               hidden(actionButton(
                 inputId = "transformSubm",
-                label="Transform",
+                class = "subm-action-btns",
+                label = "Transform",
                 icon = icon("refresh")
               )),
               # Process files
               hidden(actionButton(
                 inputId = "validateSubm",
-                label="Validate",
+                class = "subm-action-btns",
+                label = "Validate",
                 icon = icon("check")
               )),
               # Augment Contents
               hidden(actionButton(
                 inputId = "augmentSubm",
-                label="Augment",
+                class = "subm-action-btns",
+                label = "Augment",
                 icon = icon("exchange")
               )),
               # Export Contents
               hidden(actionButton(
                 inputId = "exportSubm",
-                label="Export",
+                class = "subm-action-btns",
+                label = "Export",
                 icon = icon("share")
               ))
             ),
@@ -145,12 +152,6 @@ library(glue)
             DT::dataTableOutput(outputId="submFilesData")
           )
         )
-      ),
-      # Processing Page ----
-      tabPanel(
-        id = "menuProcessing",
-        title = "Processing",
-        titlePanel(title = "Data Validation & Processing")
       ),
       # Reports Page ----
       tabPanel(
@@ -221,9 +222,7 @@ library(glue)
 
       flow <- proc_flow[1:pos] %>%
         stringr::str_to_sentence() %>%
-        paste(c(1:pos), ., collapse = " => ")
-
-      print(flow)
+        paste(paste0(c(1:pos), "."), ., collapse = " => ")
 
       return(flow)
     })
