@@ -38,7 +38,7 @@ validate_initial <- function(filepath){
 #'
 #' @export
 
-is_cirgtab <- function(filepath){
+has_cirgtab <- function(filepath){
 
   if(missing(filepath))
     stop("No filepath provided.")
@@ -70,7 +70,7 @@ is_cirgtab <- function(filepath){
 #'
 #' @export
 
-is_metatab <- function(filepath){
+has_metatab <- function(filepath){
 
   if(missing(filepath))
     stop("No filepath provided.")
@@ -100,11 +100,12 @@ check_meta <- function(filepath){
   meta <- NULL
 
   #type
-  if(is_metatab(filepath)){
+  if(has_metatab(filepath)){
     has_meta <- TRUE
     meta <- cir_extract_meta(filepath)
 
   } else {
+
     meta <- tibble::tibble(
       ou = NA_character_,
       period = NA_character_,
@@ -177,7 +178,7 @@ check_tabs <- function(filepath){
 
   has_cirg <- FALSE
 
-  if(is_cirgtab(filepath)) {
+  if(has_cirgtab(filepath)) {
     has_cirg <- TRUE
   }
 

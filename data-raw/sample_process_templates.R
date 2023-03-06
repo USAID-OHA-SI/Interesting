@@ -93,7 +93,7 @@
 
   # Worksheets Visibility
 
-  subms %>%
+  shts <- subms %>%
     dplyr::first() %>%
     cir_vsheets()
 
