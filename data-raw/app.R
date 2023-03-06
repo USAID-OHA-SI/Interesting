@@ -53,7 +53,8 @@ library(glue)
       tabPanel(
         id = "menuSubmissions",
         title = "Submissions",
-        titlePanel(title = "OU / Country Data Submissions"),
+        titlePanel(title = "Validate & Process Submissions"),
+        # Upload Widget ----
         wellPanel(
           fluidRow(
             tags$style(type="text/css", "body {padding-bottom: 50px;}"),
@@ -76,7 +77,7 @@ library(glue)
               tags$style(type="text/css", "#procFlow {padding-bottom: 5px;}"),
               uiOutput(outputId = "procFlow")
             ),
-            # 1: Process input files ----
+            # 1: Process Action Buttons ----
             column(
               width = 12,
               # Process files
@@ -157,7 +158,7 @@ library(glue)
       tabPanel(
         id = "menuReports",
         title = "Reports",
-        titlePanel(title = "Data Processing Reports")
+        titlePanel(title = "Processing Reports")
       ),
       # Data Page ----
       tabPanel(
@@ -203,7 +204,20 @@ library(glue)
       curr_step = NULL
     )
 
-    # Process flow
+    # SUBM Action Buttons - Process flow
+
+    # submBtns <- reactive({
+    #   runjs("
+    #     var btns = document.getElementByClass('subm-action-btns')
+    #     var btnIds = []
+    #     for (var b = 0; b < btns.length; b++) {
+    #       btnIds.push(btns[b].id)
+    #     }
+    #   ")
+    # })
+    #
+    # print(submBtns)
+
     proc_flow <- c(
       "selection",
       "metadata",

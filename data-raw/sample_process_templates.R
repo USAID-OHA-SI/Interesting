@@ -14,7 +14,7 @@
 
   # Processing Date
   #proc_date <- glamr::curr_date()
-  proc_date <- "2022-08-15"
+  proc_date <- "2022-03-06"
 
   if (!dir.exists(file.path(proc_folder, paste0("CIRG-", proc_date))))
     cir_setup(folder = proc_folder, dt = proc_date)
@@ -59,6 +59,7 @@
     relocate(subm_id, .before = 1) %>%
     relocate(subm_files_count, .after = last_col())
 
+  # Check duplicates
   df_cir_subm %>%
     count(subm_id) %>%
     filter(n > 1)
@@ -68,7 +69,7 @@
   df_cir_subm %>% distinct(subm_period)
 
   df_cir_files <- df_cir_subm %>%
-    filter(subm_period == "FY22 Q4") %>%
+    filter(subm_period == last(subm_period)) %>%
     select(subm_id, subm_file = subm_files) %>%
     separate_rows(subm_file, sep = ",\\s") %>%
     mutate(subm_file_id = str_extract(subm_file, "(?<=\\?id\\=).*"),
@@ -89,8 +90,6 @@
 
   #subms <- fs::dir_ls("~/Downloads", regexp = "CIRG_.*.xlsx$")
   subms <- fs::dir_ls(dir_raw, regexp = "CIRG_.*.xlsx$")
-
-  subms
 
   # Worksheets Visibility
 
