@@ -85,15 +85,7 @@ cir_import <- function(filepath,
         filename = basename(filepath),
         file_imported = TRUE,
         sheet = .x,
-        sheet_imported = NA,
-        # template_confirmed = !is.null(req_cols),
-        # template_tech_areas = paste0(ta, collapse = ", "),
-        # cols_missing = paste0(missing, collapse = ", "),
-        # cols_extra = paste0(extra, collapse = ", "),
-        # cols_extra_restricted = str_detect(extra, "\\[.*\\]$", negate = TRUE) & length(extra) > 0,
-        # has_data = is.null(req_cols) & nrow(df) > 0,
-        # has_multi_ous = ifelse(str_detect(ous, "\\[.*\\]$"), -999, length(ous) > 1),
-        # ous = paste0(ous, collapse = ", ")
+        sheet_imported = FALSE
       )
 
       # Check for valid core columns
@@ -151,8 +143,8 @@ cir_import <- function(filepath,
       #print(sht_import)
 
       checks <<- pvimp %>%
-        #dplyr::mutate(sheet_imported = sht_import) %>% # over-write sheet status
-        dplyr::bind_cols(vimp$checks) %>%              # expand errors
+        dplyr::mutate(sheet_imported = vimp_checks$template_confirmed) %>%
+        dplyr::bind_cols(vimp_checks) %>%              # expand errors
         dplyr::bind_rows(checks, .)                    # append to global errors
 
       # Exist for invalidated data structure
@@ -164,11 +156,28 @@ cir_import <- function(filepath,
                       sheet = .x,
                       row_id = dplyr::row_number() + 2)
 
-      #print(glimpse(df_data))
-
       return(df_data)
     })
 
+  # Move tracking variable up front
+  df_imp <- df_imp %>%
+    dplyr::relocate(filename, sheet, row_id, .before = 1)
+
+  # Check missing columns based on template
+  subm_cols <- df_imp %>%
+    dplyr::select(-c(filename, sheet, row_id)) %>%
+    base::names()
+
+  req_cols <- df_imp %>%
+    dplyr::select(-c(filename, sheet, row_id)) %>%
+    cir_template_cols(template = template)
+
+  miss_cols <- setdiff(req_cols, subm_cols)
+
+  checks <<- checks %>%
+    tibble::add_column(cols_missing = paste(miss_cols, collapse = ", "))
+
+  # Return data + checks
   return(list(
     "checks" = checks,
     "data" = df_imp

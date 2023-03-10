@@ -113,13 +113,15 @@
   metas <- subms %>%
     map_dfr(validate_initial)
 
+  #  Get random file by template
   subm_file <- metas %>%
-    #filter(!if_any(!filename, ~is.na(.)), type == "Wide") %>%     # test wide templates
+    filter(!if_any(!filename, ~is.na(.)), type == "Wide") %>%     # test wide templates
     #filter(!if_any(!filename, ~is.na(.)), type == "Semi-wide") %>% # Test semi-wide templates
-    filter(!if_any(!filename, ~is.na(.)), type == "Long") %>%      # Test semi-wide templates
+    #filter(!if_any(!filename, ~is.na(.)), type == "Long") %>%      # Test semi-wide templates
     filter(str_detect(filename, "FY23")) %>%
     pull(filename) %>%
-    first() %>%
+    sample(1) %>%
+    #first() %>%
     #nth(2) %>%
     file.path(dir_raw, .)
 
@@ -128,13 +130,12 @@
   meta <- subm_file %>%
     validate_initial()
 
-  # Import & 2nd round of Validation
+  # Import & 2nd round of validations
   df_subm <- subm_file %>%
     cir_import(template = meta$type)
 
   df_subm$checks %>% glimpse
   df_subm$data %>% glimpse
-  df_subm$data %>% names
 
   df_subm$data %>%
     dplyr::select(dplyr::ends_with(".."))

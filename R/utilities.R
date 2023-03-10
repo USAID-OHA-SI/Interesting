@@ -202,14 +202,13 @@ cir_vsheets <- function(.subm, return_names = FALSE) {
 #' }
 #'
 cir_extract_meta <- function(filepath, meta_type = NULL) {
-  if (!is_metatab(filepath)) {
+  if (!has_metatab(filepath)) {
     return(NA)
   }
 
   # Read meta sheet
   metatable <- readxl::read_excel(
       path = filepath,
-      # sheet = "meta",
       range = "meta!B1:E2"
     ) %>%
     utils::stack() %>%
@@ -255,7 +254,7 @@ cir_extract_meta <- function(filepath, meta_type = NULL) {
 #' }
 #'
 cir_store_meta <- function(filepath) {
-  if (is_metatab(filepath)) {
+  if (has_metatab(filepath)) {
     metatable <- readxl::read_excel(filepath, range = "meta!B1:E2") %>% # BK - What if the meta tab is moved?
       stack() %>%
       rename(
@@ -362,7 +361,7 @@ cir_template_cols <- function(df_cir,
     req_cols <- ta %>%
       stringr::str_to_lower() %>%
       purrr::map(function(.x) {
-        itemplate_cols_wgroups[[.x]]
+        template_cols_wgroups[[.x]]
       }) %>%
       base::unlist() %>%
       base::unique()
@@ -406,11 +405,11 @@ cir_template_ta <- function(df_cir) {
         stringr::str_detect(indicator, "^dreams_") ~ "DREAMS",
         stringr::str_detect(indicator, "^gend_") ~ "GENDER",
         stringr::str_detect(indicator, "^ovc_") ~ "OVC",
-        stringr::str_detect(indicator, "^pmtct_|^tx_pvls_") ~ "LAB",
+        stringr::str_detect(indicator, "^pmtct_|^tx_pvls_(eli|sam|ret)") ~ "LAB",
         stringr::str_detect(indicator, "^tx_curr_dart") ~ "OTHER",
         stringr::str_detect(indicator, "^prep_") ~ "PrEP",
         stringr::str_detect(indicator, "^sc_") ~ "SCH",
-        stringr::str_detect(indicator, "^tx_.*_verify") ~ "KP",
+        stringr::str_detect(indicator, "^tx_(curr|new|rtt|pvls)_verify") ~ "KP",
         stringr::str_detect(indicator, "^vmmc_") ~ "VMMC",
         TRUE ~ NA_character_
       )

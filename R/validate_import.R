@@ -17,6 +17,7 @@ validate_import <- function(df_cir, template){
   # Defaults
   cols <- names(df_cir)
   ta <- cir_template_ta(df_cir)
+  ta_inds <- NULL
   req_cols <- cir_template_cols(df_cir, template = template)
 
   # Missing & Extra Columns
@@ -26,11 +27,32 @@ validate_import <- function(df_cir, template){
   # Check multi ous sheets
   ous <- "[Unknown]"
 
+  # List Indicators
+  if (template_cols_ind %in% cols) {
+    ta_inds <- df_cir %>%
+      dplyr::distinct({template_cols_ind}) %>%
+      dplyr::pull() %>%
+      sort() %>%
+      paste(collapse = ", ")
+  }
+
   # Check data structure based on template
   if (!is.null(req_cols)) {
 
+    # TA Indicators
+    if (!template_cols_ind %in% cols) {
+      ta_inds <- req_cols %>%
+        setdiff(c(template_cols_core,
+                  template_cols_ind,
+                  template_cols_disaggs)) %>%
+        stringr::str_extract("[^.]+") %>%
+        base::unique() %>%
+        base::sort() %>%
+        paste0(collapse = ", ")
+    }
+
     # Get missing and extra cols
-    missing <- setdiff(req_cols, cols)
+    #missing <- setdiff(req_cols, cols)
     extra <- setdiff(cols, req_cols)
 
     # Restrict Extract Columns
@@ -45,23 +67,12 @@ validate_import <- function(df_cir, template){
       dplyr::pull(operatingunit)
   }
 
-  # print(ta)
-  # print(missing)
-  # print(extra)
-  # print(ous)
-
-  # print(is.null(req_cols))
-  # print(ta)
-  # print(missing)
-  # print(extra)
-  # print(nrow(df))
-  # print(ous)
-
   # Validations
   vimp <- tibble::tibble(
     template_confirmed = !is.null(req_cols),
     template_tech_areas = paste0(ta, collapse = ", "),
-    cols_missing = paste0(missing, collapse = ", "),
+    indicators = paste0(ta_inds, collapse = ", "),
+    #cols_missing = paste0(missing, collapse = ", "),
     cols_extra = paste0(extra, collapse = ", "),
     cols_extra_restricted = length(extra) > 0 & all(extra %in% cols),
     has_data = nrow(df_cir) > 0,
@@ -72,8 +83,9 @@ validate_import <- function(df_cir, template){
   # Notification
   if (interactive()) {
     cat("\nSheet Technical areas:", paint_yellow(vimp$template_tech_areas),
+        "\nSheet Indicators?", paint_yellow(paste0(ta_inds, collapse = ", ")),
         "\nAre there missing columns?", paint_yellow(ifelse(vimp$cols_missing == "", "[None]", vimp$cols_missing)),
-        "\nAre there extra columns?", paint_yellow(ifelse(vimp$cols_extra == "", "[None]", vimp$cols_extra)),
+        #"\nAre there extra columns?", paint_yellow(ifelse(vimp$cols_extra == "", "[None]", vimp$cols_extra)),
         "\nSheet contains data?", paint_iftrue(vimp$has_data),
         "\nSheet has multiple OUs?", paint_iftrue(vimp$has_multi_ous),
         "\nOUs: ", paint_iftrue(vimp$ous),

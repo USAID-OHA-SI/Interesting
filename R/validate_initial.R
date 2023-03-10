@@ -34,7 +34,7 @@ validate_initial <- function(filepath){
 #'
 #' @note TODO - Change function name to `has_cirtab`
 #'
-#' @param filepath filepath to sumbitted template
+#' @param filepath submission file path
 #'
 #' @export
 
