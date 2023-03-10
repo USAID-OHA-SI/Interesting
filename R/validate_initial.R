@@ -135,7 +135,11 @@ check_meta <- function(filepath){
   ou_valid <- rep_ou %in% pepfar_countries$operatingunit | rep_ou %in% pepfar_countries$ou_country
 
   # Check template
-  temp_valid <- meta[meta$mtype == "type", "mvalue"] %in% names(templates)
+  #temp_valid <- meta[meta$mtype == "type", "mvalue"] %in% names(templates)
+  temp_valid <- meta %>%
+    dplyr::filter(mtype == "type") %>%
+    dplyr::pull(mvalue) %>%
+    purrr::has_element(names(templates), .)
 
   # Reshape metadata
   meta <- meta %>%
@@ -223,7 +227,7 @@ check_tabs <- function(filepath){
 
     cat("\nHas CIRG Sheets? ", paint_iftrue(cirg$has_cirg_sheets),
         "\nNumber of sheets: ", cirg$sheets_count,
-        "\nAll sheets [valid sheet must be labeled 'CIRG']: ", paint_blue(paste(tabs_list, collapse = ", ")),
+        "\nData sheets [Valid sheets contain 'CIRG']: ", paint_blue(paste(tabs_list, collapse = ", ")),
         "\nSheets to be imported?", paint_green(cirg$sheets_valid),
         "\nSheets to be excluded?", paint_ifempty(cirg$sheets_exclude),
         "\nSheets hidden?", paint_ifempty(cirg$sheets_hidden),

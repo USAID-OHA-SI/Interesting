@@ -14,7 +14,7 @@
 
   # Processing Date
   #proc_date <- glamr::curr_date()
-  proc_date <- "2022-03-06"
+  proc_date <- "2023-03-06"
 
   if (!dir.exists(file.path(proc_folder, paste0("CIRG-", proc_date))))
     cir_setup(folder = proc_folder, dt = proc_date)
@@ -97,25 +97,66 @@
     dplyr::first() %>%
     cir_vsheets()
 
+  vshts <- subms %>%
+    dplyr::first() %>%
+    cir_vsheets(return_names = T)
+
   #subms %>% map_dfr(cir_vsheets)
 
   # Metadata
 
   # Initial Validation
 
-  meta <- subms %>%
-    dplyr::first() %>%
+  metas <- subms %>%
+    map_dfr(validate_initial)
+
+  subm_file <- metas %>%
+    #filter(!if_any(!filename, ~is.na(.)), type == "Wide") %>%     # test wide templates
+    #filter(!if_any(!filename, ~is.na(.)), type == "Semi-wide") %>% # Test semi-wide templates
+    filter(!if_any(!filename, ~is.na(.)), type == "Long") %>%      # Test semi-wide templates
+    filter(str_detect(filename, "FY23")) %>%
+    pull(filename) %>%
+    first() %>%
+    #nth(2) %>%
+    file.path(dir_raw, .)
+
+  open_path(subm_file)
+
+  meta <- subm_file %>%
     validate_initial()
 
-  #metas <- subms %>% map_dfr(validate_initial)
-
   # Import & 2nd round of Validation
-  df_subm <- subms %>%
-    dplyr::first() %>%
+  df_subm <- subm_file %>%
     cir_import(template = meta$type)
 
   df_subm$checks %>% glimpse
   df_subm$data %>% glimpse
+  df_subm$data %>% names
+
+  df_subm$data %>%
+    dplyr::select(dplyr::ends_with(".."))
+
+  df_subm$data %>%
+    #select(1:filename) %>%
+    #select(-filename) %>%
+    names() %>%
+    setdiff(
+      c(template_cols_core, template_cols_ind, template_cols_disaggs)
+    ) %>%
+    stringr::str_extract("[^.]+") %>%
+    base::unique() %>%
+    stringr::str_to_lower() %>%
+    tibble::tibble(indicator = .)
+
+  df_subm$data %>%
+    select(1:filename) %>%
+    select(-filename) %>%
+    cir_template_ta()
+
+  df_subm$data %>%
+    select(1:filename) %>%
+    select(-filename) %>%
+    cir_template_cols(template = meta$type)
 
   df_subm$checks %>%
     mutate(across(where(is.logical), as.character)) %>%

@@ -2,9 +2,9 @@
 # Template Types
 
   templates <- list(
-    "Wide" = c("0.01", "1.00", "2.01"),
-    "Semi-wide" = c("0.01", "1.00", "2.01"),
-    "Long" = c("0.01", "1.00", "2.01")
+    "Wide" = c("0.01", "1.00", "2.01", "2.02"),
+    "Semi-wide" = c("0.01", "1.00", "2.01", "2.02"),
+    "Long" = c("0.01", "1.00", "2.01", "2.02")
   )
 
   usethis::use_data(templates, overwrite = TRUE)
@@ -14,7 +14,7 @@
 
  #store column names for long template
 
-  template_cols_long <- readxl::read_excel("data-raw/templates/FY22_CIRG_Submission_Long_All_Technical_Areas.xlsx",
+  template_cols_long <- readxl::read_excel("data-raw/templates/FY23_CIRG_Submission_Long_All_Technical_Areas.xlsx",
                                            sheet = "CIRG", col_types = "text", n_max = 0) %>%
     names()
 
@@ -23,12 +23,49 @@
 
  #store column names for semi_wide template
 
-  template_cols_semiwide <- readxl::excel_sheets("data-raw/templates/FY22_CIRG_Submission_Semi_Wide_ All_Technical_Areas.xlsx") %>%
+  # All Semi-wide templates
+  template_cols_semiwide <- readxl::excel_sheets(
+    "data-raw/templates/FY23_CIRG_Submission_Semi_Wide_All_Technical_Areas.xlsx") %>%
     stringr::str_subset("CIRG") %>%
-    purrr::map_dfr(.f = ~ readxl::read_excel("data-raw/templates/FY22_CIRG_Submission_Semi_Wide_ All_Technical_Areas.xlsx", sheet = .x, skip = 2, col_types = "text")) %>%
+    purrr::map_dfr(.f = ~ readxl::read_excel(
+      "data-raw/templates/FY23_CIRG_Submission_Semi_Wide_All_Technical_Areas.xlsx",
+      sheet = .x,
+      skip = 2,
+      col_types = "text"
+    )) %>%
     names()
 
   usethis::use_data(template_cols_semiwide, overwrite = TRUE)
+
+  # Sub-category of Semi-wide templates
+  template_cols_semiwide_cases <- readxl::excel_sheets(
+    "data-raw/templates/FY23_CIRG_Submission_Semi_Wide_All_Technical_Areas.xlsx"
+    ) %>%
+    stringr::str_subset("CIRG") %>%
+    purrr::map(function(.tab) {
+      # Extact required cols
+      tab_cols <- readxl::read_excel(
+        "data-raw/templates/FY23_CIRG_Submission_Semi_Wide_All_Technical_Areas.xlsx",
+        sheet = .tab,
+        skip = 2,
+        n_max = 1,
+        col_types = "text"
+      ) %>%
+      names()
+
+      return(tab_cols)
+    })
+
+  # Set category name
+  template_cols_semiwide_cases <- readxl::excel_sheets(
+    "data-raw/templates/FY23_CIRG_Submission_Semi_Wide_All_Technical_Areas.xlsx"
+    ) %>%
+    stringr::str_to_lower() %>%
+    stringr::str_subset("cirg") %>%
+    stringr::str_remove("_cirg$") %>%
+    setNames(template_cols_semiwide_cases, .)
+
+  usethis::use_data(template_cols_semiwide_cases, overwrite = TRUE)
 
  #Store column names for wide template -------------------
 
@@ -77,16 +114,18 @@
   template_wide_gender <- lst2[[2]]
   template_wide_kp <- lst2[[3]]
   template_wide_lab <- lst2[[4]]
-  template_wide_ovc <- lst2[[5]]
-  template_wide_prep <- lst2[[6]]
-  template_wide_sch <- lst2[[7]]
-  template_wide_vmmc <- lst2[[8]]
+  template_wide_other <- lst2[[5]]
+  template_wide_ovc <- lst2[[6]]
+  template_wide_prep <- lst2[[7]]
+  template_wide_sch <- lst2[[8]]
+  template_wide_vmmc <- lst2[[9]]
 
   template_cols_wide <- c(
     template_wide_dreams,
     template_wide_gender,
     template_wide_kp,
     template_wide_lab,
+    template_wide_other,
     template_wide_ovc,
     template_wide_prep,
     template_wide_sch,
@@ -99,6 +138,7 @@
     "gender" = template_wide_gender,
     "kp" = template_wide_kp,
     "lab" = template_wide_lab,
+    "other" = template_wide_other,
     "ovc" = template_wide_ovc,
     "prep" = template_wide_prep,
     "sch" = template_wide_sch,
@@ -115,17 +155,18 @@
   usethis::use_data(template_wide_gender, overwrite = TRUE)
   usethis::use_data(template_wide_kp, overwrite = TRUE)
   usethis::use_data(template_wide_lab, overwrite = TRUE)
+  usethis::use_data(template_wide_other, overwrite = TRUE)
   usethis::use_data(template_wide_ovc, overwrite = TRUE)
   usethis::use_data(template_wide_prep, overwrite = TRUE)
   usethis::use_data(template_wide_sch, overwrite = TRUE)
   usethis::use_data(template_wide_vmmc, overwrite = TRUE)
 
-
   #store meta data columns
 
-  template_cols_value <- "val"
+  template_cols_value <- "value"
   template_cols_ind <- "indicator"
-  template_cols_disaggs <- c("sex", "age", "population", "otherdisaggregate", "numdenom")
+  template_cols_disaggs <- c("sex", "age", "population",
+                             "otherdisaggregate", "numdenom")
 
   template_cols_meta <- template_cols_long %>% setdiff(template_cols_value)
 
