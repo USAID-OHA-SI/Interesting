@@ -4,7 +4,7 @@
 \alias{cir_import}
 \title{Import template sheet(s)}
 \usage{
-cir_import(filepath, template = NULL)
+cir_import(filepath, sheets = NULL, template = NULL)
 }
 \arguments{
 \item{filepath}{filepath to submitted template}

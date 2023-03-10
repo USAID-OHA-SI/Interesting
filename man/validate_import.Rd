@@ -4,10 +4,10 @@
 \alias{validate_import}
 \title{Validation on import}
 \usage{
-validate_import(df, template)
+validate_import(df_cir, template)
 }
 \arguments{
-\item{df}{df create during \code{cir_import()}}
+\item{df_cir}{df created during \code{cir_import()}}
 
 \item{template}{submission template}
 }

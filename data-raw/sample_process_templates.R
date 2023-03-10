@@ -10,16 +10,19 @@
 # SETUP
 
   # Processing folder
-  proc_folder <- "cirg-submissions"
+  proc_folder <- "../../CIRG-SUBMISSIONS"
 
   # Processing Date
   #proc_date <- glamr::curr_date()
   proc_date <- "2023-03-06"
 
-  if (!dir.exists(file.path(proc_folder, paste0("CIRG-", proc_date))))
+  if (!dir.exists(file.path(proc_folder, paste0("CIRG-", proc_date)))) {
     cir_setup(folder = proc_folder, dt = proc_date)
+  }
 
-  dir_raw <- cir_folder(type = "raw", dt = proc_date)
+  dir_raw <- paste0("CIRG-", proc_date) %>%
+    file.path(proc_folder, .) %>%
+    cir_folder(folderpath = ., type = "raw")
 
 # GOOGLE DRIVE ----
 #TODO Function to pull latest/resubmisions

@@ -4,10 +4,12 @@
 \alias{cir_vsheets}
 \title{Get list of visible excel sheets}
 \usage{
-cir_vsheets(.subm)
+cir_vsheets(.subm, return_names = FALSE)
 }
 \arguments{
 \item{.subm}{Submission file}
+
+\item{return_names}{Should the function return the list of valid data sheet names? Default is false}
 }
 \value{
 Worksheet visibility as data frame

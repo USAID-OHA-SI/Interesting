@@ -4,7 +4,7 @@
 \alias{cir_template_cols}
 \title{Validate template}
 \usage{
-cir_template_cols(df_cir, template = "long")
+cir_template_cols(df_cir, template = c("Long", "Semi-wide", "Wide"))
 }
 \arguments{
 \item{template}{Template name to validate against}

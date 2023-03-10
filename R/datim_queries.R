@@ -224,8 +224,8 @@ datim_orgunits <- function(username, password, cntry,
 
 #' @title Clean OrgUnits SQLView
 #'
-#' @param .data
-#' @param levels
+#' @param .data  Data Frame
+#' @param levels Org Levels
 #'
 
 clean_orgview <- function(.data, levels) {
@@ -248,8 +248,8 @@ clean_orgview <- function(.data, levels) {
 
 #' @title Reshape OrgUnits SQLView
 #'
-#' @param .data
-#' @param levels
+#' @param .data  Data Frame
+#' @param levels Org Levels
 #'
 
 reshape_orgview <- function(.data, levels) {
@@ -342,8 +342,8 @@ reshape_orgview <- function(.data, levels) {
 
 #' @title Rename OrgUnit SQLView
 #'
-#' @param .data
-#' @param levels
+#' @param .data  Data Frame
+#' @param levels Org Levels
 #'
 
 rename_orgview <- function(.data, levels) {

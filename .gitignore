@@ -51,6 +51,7 @@ vignettes/*.pdf
 *.twbx
 *.pptx
 *.hyper
+*.json
 
 #nothing from these folders
 AI/*

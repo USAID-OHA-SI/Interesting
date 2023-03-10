@@ -7,7 +7,9 @@
 clean_orgview(.data, levels)
 }
 \arguments{
-\item{levels}{}
+\item{.data}{Data Frame}
+
+\item{levels}{Org Levels}
 }
 \description{
 Clean OrgUnits SQLView

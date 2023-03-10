@@ -5,7 +5,7 @@
 #'
 #' @export
 #'
-cir_setup <- function(folder = "cirg-submissions", dt = NULL) {
+cir_setup <- function(folderpath, dt = NULL) {
   # Date
   curr_dt <- ifelse(
     is.null(dt),
@@ -14,28 +14,28 @@ cir_setup <- function(folder = "cirg-submissions", dt = NULL) {
   )
 
   # Processing folder
-  if (!base::dir.exists(file.path(".", folder))) {
-    base::dir.create(file.path(".", folder))
+  if (!base::dir.exists(folderpath)) {
+    usethis::ui_stop("{folderpath} does not exist.")
   }
 
   # Current Processing folder
-  dir_curr_proc <- file.path(".", folder) %>%
+  dir_curr_proc <- folderpath %>%
     base::file.path(paste0("CIRG-", curr_dt))
 
   dir_curr_proc %>% base::dir.create()
 
   # Sub-folders
   df_subfolders <- c(
-    "reference",
-    "raw",
-    "metadata",
-    "validations",
-    "processed",
-    "transformed",
-    "cleaned",
-    "final",
-    "archive"
-  ) %>%
+      "reference",
+      "raw",
+      "metadata",
+      "validations",
+      "processed",
+      "transformed",
+      "cleaned",
+      "final",
+      "archive"
+    ) %>%
     tibble::tibble(folder = .) %>%
     dplyr::mutate(order = row_number() - 1)
 
@@ -47,26 +47,24 @@ cir_setup <- function(folder = "cirg-submissions", dt = NULL) {
 }
 
 
-#' Get processing folder path
+#' @title Get processing folder path
 #'
-#' @param type Folder type
-#' @param dt   processing date
+#' @param folderpath Parent folder path
+#' @param type       Folder type
 #'
 #' @export
 #'
-cir_folder <- function(type = "raw", dt = NULL) {
-  # Date
-  curr_dt <- ifelse(is.null(dt),
-    base::format(base::Sys.Date(), "%Y-%m-%d"),
-    dt
-  )
+cir_folder <- function(folderpath, type = "raw") {
+  # Check if parent dir exists
+  if (!fs::is_dir(folderpath)) usethis::ui_stop("{folderpath} does not exist.")
 
   # Processing folder
-  folder <- base::file.path(paste0("./cirg-submissions/CIRG-", curr_dt)) %>%
-    fs::dir_ls(regexp = paste0(type, "$"), recurse = TRUE)
+  folder <- folderpath %>%
+    fs::dir_ls(regexp = paste0(type, "$"),
+               recurse = TRUE)
 
   if (!base::dir.exists(folder)) {
-    usethis::ui_warn(glue::glue("Folder does not exist: {folder}"))
+    usethis::ui_warn(glue::glue("{folder} directory was not found within {folderpath}"))
     return(NULL)
   }
 
