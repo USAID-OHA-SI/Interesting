@@ -4,7 +4,7 @@
 \alias{cir_reshape_checks}
 \title{Reshape Validation Checks data frame}
 \usage{
-cir_reshape_checks(.df_checks, vname = "location")
+cir_reshape_checks(.df_checks, vname = "status")
 }
 \arguments{
 \item{.df_checks}{CIR Processing checks as data frame}
