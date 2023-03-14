@@ -11,6 +11,7 @@ validate_initial <- function(filepath){
 
   #Check Metadata
   meta <- check_meta(filepath)
+
   # Check data sheets
   cirg <- check_tabs(filepath)
 
@@ -33,11 +34,11 @@ validate_initial <- function(filepath){
 #'
 #' @note TODO - Change function name to `has_cirtab`
 #'
-#' @param filepath filepath to sumbitted template
+#' @param filepath submission file path
 #'
 #' @export
 
-is_cirgtab <- function(filepath){
+has_cirgtab <- function(filepath){
 
   if(missing(filepath))
     stop("No filepath provided.")
@@ -69,7 +70,7 @@ is_cirgtab <- function(filepath){
 #'
 #' @export
 
-is_metatab <- function(filepath){
+has_metatab <- function(filepath){
 
   if(missing(filepath))
     stop("No filepath provided.")
@@ -99,11 +100,12 @@ check_meta <- function(filepath){
   meta <- NULL
 
   #type
-  if(is_metatab(filepath)){
+  if(has_metatab(filepath)){
     has_meta <- TRUE
     meta <- cir_extract_meta(filepath)
 
   } else {
+
     meta <- tibble::tibble(
       ou = NA_character_,
       period = NA_character_,
@@ -133,7 +135,11 @@ check_meta <- function(filepath){
   ou_valid <- rep_ou %in% pepfar_countries$operatingunit | rep_ou %in% pepfar_countries$ou_country
 
   # Check template
-  temp_valid <- meta[meta$mtype == "type", "mvalue"] %in% names(templates)
+  #temp_valid <- meta[meta$mtype == "type", "mvalue"] %in% names(templates)
+  temp_valid <- meta %>%
+    dplyr::filter(mtype == "type") %>%
+    dplyr::pull(mvalue) %>%
+    purrr::has_element(names(templates), .)
 
   # Reshape metadata
   meta <- meta %>%
@@ -156,7 +162,7 @@ check_meta <- function(filepath){
         "\nOU/Country:", paint_ifna(meta$ou),
         "\nIs OU/Country valid:", paint_iftrue(meta$has_valid_ou),
         "\nReporting period:", paint_ifna(meta$period),
-        "\nIs Rep. period valid?", paint_iftrue(meta$has_valid_period),
+        "\nIs Reporting period valid?", paint_iftrue(meta$has_valid_period),
         "\nSubmission template:", crayon::blue(paste(meta$type, meta$version)),
         "\nIs template valid?", paint_iftrue(meta$has_valid_template),
         "\nIs metadata valid?", paint_iftrue(meta$has_valid_meta),
@@ -176,7 +182,7 @@ check_tabs <- function(filepath){
 
   has_cirg <- FALSE
 
-  if(is_cirgtab(filepath)) {
+  if(has_cirgtab(filepath)) {
     has_cirg <- TRUE
   }
 
@@ -210,7 +216,7 @@ check_tabs <- function(filepath){
     has_cirg_sheets = has_cirg,
     sheets_count = tabs_count,
     sheets_valid = ifelse(nchar(tabs_imported) > 0, tabs_imported, "None"),
-    sheets_exclude = ifelse(nchar(tabs_excluded) > 0, tabs_excluded, "None"),
+    sheets_excluded = ifelse(nchar(tabs_excluded) > 0, tabs_excluded, "None"),
     sheets_hidden = ifelse(nchar(tabs_hidden) > 0, tabs_hidden, "None"),
   )
 
@@ -221,10 +227,10 @@ check_tabs <- function(filepath){
 
     cat("\nHas CIRG Sheets? ", paint_iftrue(cirg$has_cirg_sheets),
         "\nNumber of sheets: ", cirg$sheets_count,
-        "\nAll sheets [valid sheet must be labeled 'CIRG']: ", paint_blue(paste(tabs_list, collapse = ", ")),
-        "\nWhat sheets will be imported?", paint_green(cirg$sheets_valid),
-        "\nWhat sheets will be excluded?", paint_ifempty(cirg$sheets_exclude),
-        "\nWhat sheets are hidden?", paint_ifempty(cirg$sheets_hidden),
+        "\nData sheets [Valid sheets contain 'CIRG']: ", paint_blue(paste(tabs_list, collapse = ", ")),
+        "\nSheets to be imported?", paint_green(cirg$sheets_valid),
+        "\nSheets to be excluded?", paint_ifempty(cirg$sheets_exclude),
+        "\nSheets hidden?", paint_ifempty(cirg$sheets_hidden),
         "\n")
   }
 

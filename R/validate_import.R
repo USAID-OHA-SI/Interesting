@@ -1,66 +1,73 @@
 #' Validation on import
 #'
-#' @param df df create during `cir_import()`
+#' @param df_cir   df created during `cir_import()`
 #' @param template submission template
 #'
 #' @export
 
-validate_import <- function(df, template){
+validate_import <- function(df_cir, template){
+
+  # Notification
+  if (interactive()) {
+    cat("\n---- IMPORT VALIDATIONS ----\n\n")
+  }
+
+  logger::log_info("\nValidating data against {template} template")
 
   # Defaults
-  cols <- names(df)
-  req_cols <- cir_template_cols(df, template = template)
+  cols <- names(df_cir)
+  ta <- cir_template_ta(df_cir)
+  ta_inds <- NULL
+  req_cols <- cir_template_cols(df_cir, template = template)
 
   # Check multi ous sheets
-  ous <- check_distinct_ous(df)
+  ous <- "[Unknown]"
 
-  # Check if wide templates has mixed tech areas
-  ta <- NULL
+  # List Indicators
+  if (template_cols_ind %in% cols) {
+    ta_inds <- df_cir %>%
+      dplyr::select(tidyselect::all_of(template_cols_ind)) %>%
+      dplyr::distinct() %>%
+      dplyr::pull() %>%
+      sort()
+  }
 
   # Check data structure based on template
   if (!is.null(req_cols)) {
-    missing <- setdiff(req_cols, cols)
-    extra <- setdiff(cols, req_cols)
 
-    # Tech area
-    if (template == "Wide") {
-      ta <- cir_template_ta(df)
+    # TA Indicators
+    if (!template_cols_ind %in% cols) {
+      ta_inds <- req_cols %>%
+        setdiff(c(template_cols_core,
+                  template_cols_ind,
+                  template_cols_disaggs)) %>%
+        stringr::str_extract("[^.]+") %>%
+        base::unique() %>%
+        base::sort()
     }
 
-    # Restrict Extract Columns
-    if (length(extra) > 0) {
-      df <- cir_restrict_cols(df)
-    }
-
-  } else {
-    missing <- "[template could not be confirmed]"
-    extra <- "[template could not be confirmed]"
+    # Get OUs
+    ous <- df_cir %>%
+      dplyr::distinct(operatingunit) %>%
+      dplyr::pull(operatingunit)
   }
 
   # Validations
   vimp <- tibble::tibble(
-    filename = NA_character_,
-    sheet = NA_character_,
     template_confirmed = !is.null(req_cols),
     template_tech_areas = paste0(ta, collapse = ", "),
-    cols_missing = paste0(missing, collapse = ", "),
-    #cols_missing = paste0(unique(str_extract(missing, "[^.]+")), collapse = ", "),
-    cols_extra = paste0(extra, collapse = ", "),
-    #cols_extra = paste0(unique(str_extract(extra, "[^.]+")), collapse = ", "),
-    cols_extra_restricted = length(extra) > 0,
-    has_data = nrow(df) > 0,
-    has_multi_ous = length(ous) > 1,
-    ous = paste0(ous, collapse = ", ")
+    indicators = paste0(ta_inds, collapse = ", "),
+    has_data = nrow(df_cir) > 0,
+    ous = paste0(ous, collapse = ", "),
+    ous_count = ifelse(str_detect(ous, "^\\[.*\\]$"), -999, length(ous)),
   )
 
-  #PRINT VALIDATION
+  # Notification
   if (interactive()) {
-    cat("\n---- IMPORT VALIDATIONS ----",
-        "\nDoes sheet have mixed technical areas?", paint_yellow(vimp$template_tech_areas),
-        "\nAre there any missing columns on import?", paint_yellow(vimp$cols_missing),
-        "\nAre there any extra columns on import?", paint_yellow(vimp$cols_extra),
-        "\nIs sheet empty?", paint_iftrue(!vimp$has_data),
-        "\nHas multiple ous?", paint_iftrue(vimp$has_multi_ous),
+    cat("\nSheet Technical areas:", paint_yellow(vimp$template_tech_areas),
+        "\nSheet Indicators?", paint_yellow(paste0(ta_inds, collapse = ", ")),
+        "\nSheet contains data?", paint_iftrue(vimp$has_data),
+        "\nOUs Count:", vimp$ous_count,
         "\nOUs: ", paint_iftrue(vimp$ous),
         "\n")
   }
@@ -68,7 +75,7 @@ validate_import <- function(df, template){
   # Return data along with the validations
   return(list(
     "checks" = vimp,
-    "data" = df
+    "data" = df_cir
   ))
 }
 
@@ -92,11 +99,11 @@ check_distinct_ous <- function(df){
   ous_note <- ifelse(ous_check == TRUE, crayon::yellow(ous_list), crayon::blue(ous_list))
 
   #print validation
-  if (interactive()) {
-    cat("\nIs there just one OU (for non regional OUs)?", !ous_check,
-        "\nOU(s): ", ous_note,
-        "\n")
-  }
+  # if (interactive()) {
+  #   cat("\nIs there just one OU (for non regional OUs)?", !ous_check,
+  #       "\nOU(s): ", ous_note,
+  #       "\n")
+  # }
 
   return(ous)
 }

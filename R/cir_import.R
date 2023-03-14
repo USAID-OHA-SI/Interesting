@@ -10,78 +10,187 @@
 #'   filepath <- "~/CIRG_FY22_Q1_Zimbabwe_20220211.xlsx"
 #'   df_hfr <- cir_import(filepath) }
 
-cir_import <- function(filepath, template = NULL){
+cir_import <- function(filepath,
+                       sheets = NULL,
+                       template = NULL){
+
+  # skip header metadata
+  skip_rows <- 2
+
+  # Notification
+  if (interactive()) {
+    cat("\n---- IMPORTING CIR SUBMISSION ----\n\n")
+  }
+
+  # Notification
+  logger::log_info("\nSubmission: {basename(filepath)}")
+  logger::log_info("\nTemplate: {null_to_chr(template)}")
+
+  # Check valid sheets
+  if (is.null(sheets)) {
+    sheets <- filepath %>%
+      cir_vsheets(return_names = T)
+  }
+
+  logger::log_info("\nValid data sheets: {paste(sheets, collapse=', ')}")
+
+  # Stop here for file with missing valid sheets
+  if (length(sheets) == 0) {
+    logger::log_info("\nNo valid data sheets detected from {basename(filepath)} ...")
+    #usethis::ui_stop("ERROR - Invalid submission file. Missing CIRG Tab.")
+
+    # Return explicit error
+    return(
+      list(
+        "checks" = tibble::tibble(filename = basename(filepath),
+                                  file_imported = FALSE,
+                                  notes = "No valid CIR Data Sheets detected."),
+        "data" = NULL
+      )
+    )
+  }
 
   # Store all validation checks here
   checks <- tibble::tibble()
 
-  logger::log_info("\nSubmission template: {null_to_chr(template)} ...")
-
-  df <- filepath %>%
-    readxl::excel_sheets() %>% # TODO - Use sheets_valid from `vinit`
-    stringr::str_subset("CIRG") %>%
+  # Read data from submissions - 1 tab at the time
+  df_imp <- sheets %>%
     purrr::map_dfr(function(.x) {
 
       # Notification
       if (interactive()) {
-        cat("\n---- IMPORTING SHEET ----",
-            "\nCIRG sheet name: ", paint_blue(.x),
-            "\n")
+        cat("\n---- IMPORTING SHEET ----\n\n")
       }
 
-      logger::log_info("\nImporting data from sheet: {.x} ...")
+      logger::log_info("\nSheet name: {.x}")
 
       # Read data from excel sheet
       df_tab <- readxl::read_excel(filepath,
                                    sheet = .x,
-                                   skip = 2,
+                                   skip = skip_rows,
                                    col_types = "text")
 
       # Notification
-      if (interactive()) {
-        cat("\nRows count: ", paint_blue(nrow(df_tab)),
-            "\n")
-      }
-
       logger::log_info("Rows count = {nrow(df_tab)}")
-
-      if("mechanismid" %in% names(df)) {
-        logger::log_info("\nRenaming `mechanismid` to `mech_code`")
-        df <- dplyr::rename(df, mech_code = mechanismid)
-      }
 
       # Skip import validations
       if (is.null(template)) {
-        logger::log_info("\nSkipping import validations ...")
+        logger::log_info("\nTemplate parameter is not set - skipping import validations >...>")
 
         df_tab <- df_tab %>%
           dplyr::mutate(filename = basename(filepath),
-                        #temp_type = NA_character_,
-                        sheet = .x,
-                        row_id = dplyr::row_number() + 2)
+                        sheet_name = .x,
+                        row_id = (dplyr::row_number() + skip_rows + 1)) %>%
+          dplyr::relocate(filename, sheet, row_id, .before = 1)
 
         return(df_tab)
+      }
+
+      # Pre-validations
+      pvimp <- tibble::tibble(
+        filename = basename(filepath),
+        file_imported = TRUE,
+        sheet_name = .x,
+        sheet_imported = FALSE
+      )
+
+      # Check for valid core columns
+      if (!all(template_cols_core %in% names(df_tab))) {
+        # Notification
+        logger::log_info("\nTemplate missing core columns [{paste(template_cols_core, collapse=', ')}] >...> skipping import")
+
+        # Report errors
+        checks <<- pvimp %>%
+          dplyr::mutate(
+            sheet_imported = FALSE,
+            template_confirmed = FALSE,
+            has_data = nrow(df_tab) > 0,
+            notes = glue::glue("Template is missing core columns: {paste(template_cols_core, collapse=', ')}")
+          ) %>%
+          dplyr::bind_rows(checks, .)
+
+        # Excluding data
+        return(NULL)
+      }
+
+      # Make sure sheet has data
+      if (nrow(df_tab) == 0) {
+        # Notification
+        logger::log_info("\n[{.x}] is empty >...> skipping import")
+
+        # Report errors
+        checks <<- pvimp %>%
+          dplyr::mutate(
+            sheet_imported = FALSE,
+            template_confirmed = FALSE,
+            has_data = nrow(df_tab) > 0,
+            notes = glue::glue("CIRG Sheet [{.x}] is empty")
+          ) %>%
+          dplyr::bind_rows(checks, .)
+
+        # Excluding data
+        return(NULL)
       }
 
       # Validate only if template is provided
       vimp <- validate_import(df_tab, template = template)
 
-      vimp$checks <- vimp$checks %>%
-        dplyr::mutate(filename = basename(filepath), sheet = .x)
+      #print(glimpse(vimp))
 
-      checks <<- dplyr::bind_rows(checks, vimp$checks)
+      vimp_checks <- vimp$checks
+
+      #checks <<- dplyr::bind_rows(checks, vimp_checks)
+
+      #prinf(vimp_checks)
+
+      sht_import <- vimp_checks %>%
+        dplyr::pull(template_confirmed)
+
+      #print(sht_import)
+
+      checks <<- pvimp %>%
+        dplyr::mutate(sheet_imported = vimp_checks$template_confirmed) %>%
+        dplyr::bind_cols(vimp_checks) %>%              # expand errors
+        dplyr::bind_rows(checks, .)                    # append to global errors
+
+      # Exist for invalidated data structure
+      if (!vimp_checks$template_confirmed) return(NULL)
 
       # Making sure records can be traced back to submissions
-      vimp$data <- vimp$data %>%
+      df_data <- vimp$data %>%
         dplyr::mutate(filename = basename(filepath),
-                      sheet = .x,
-                      row_id = dplyr::row_number() + 2)
+                      sheet_name = .x,
+                      row_id = (dplyr::row_number() + skip_rows + 1))
 
-      return(vimp$data)
+      return(df_data)
     })
 
+  # Move tracking variable up front
+  df_imp <- df_imp %>%
+    dplyr::relocate(filename, sheet_name, row_id, .before = 1)
+
+  # Check missing columns based on template
+  subm_cols <- df_imp %>%
+    dplyr::select(-c(filename, sheet_name, row_id)) %>%
+    base::names()
+
+  req_cols <- df_imp %>%
+    dplyr::select(-c(filename, sheet_name, row_id)) %>%
+    cir_template_cols(template = template)
+
+  miss_cols <- setdiff(req_cols, subm_cols)
+  extra_cols <- setdiff(subm_cols, req_cols)
+
+  # Add missing / extra cols to errors tracker
+  checks <- checks %>%
+    dplyr::mutate(
+      cols_missing = paste(miss_cols, collapse = ", "),
+      cols_extra = paste(extra_cols, collapse = ", ")
+    )
+
+  # Return data + checks
   return(list(
     "checks" = checks,
-    "data" = df
+    "data" = df_imp
   ))
 }

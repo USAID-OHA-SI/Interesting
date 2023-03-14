@@ -10,16 +10,19 @@
 # SETUP
 
   # Processing folder
-  proc_folder <- "cirg-submissions"
+  proc_folder <- "../../CIRG-SUBMISSIONS"
 
   # Processing Date
   #proc_date <- glamr::curr_date()
-  proc_date <- "2022-08-15"
+  proc_date <- "2023-03-06"
 
-  if (!dir.exists(file.path(proc_folder, paste0("CIRG-", proc_date))))
+  if (!dir.exists(file.path(proc_folder, paste0("CIRG-", proc_date)))) {
     cir_setup(folder = proc_folder, dt = proc_date)
+  }
 
-  dir_raw <- cir_folder(type = "raw", dt = proc_date)
+  dir_raw <- paste0("CIRG-", proc_date) %>%
+    file.path(proc_folder, .) %>%
+    cir_folder(folderpath = ., type = "raw")
 
 # GOOGLE DRIVE ----
 #TODO Function to pull latest/resubmisions
@@ -59,6 +62,7 @@
     relocate(subm_id, .before = 1) %>%
     relocate(subm_files_count, .after = last_col())
 
+  # Check duplicates
   df_cir_subm %>%
     count(subm_id) %>%
     filter(n > 1)
@@ -68,7 +72,7 @@
   df_cir_subm %>% distinct(subm_period)
 
   df_cir_files <- df_cir_subm %>%
-    filter(subm_period == "FY22 Q4") %>%
+    filter(subm_period == last(subm_period)) %>%
     select(subm_id, subm_file = subm_files) %>%
     separate_rows(subm_file, sep = ",\\s") %>%
     mutate(subm_file_id = str_extract(subm_file, "(?<=\\?id\\=).*"),
@@ -90,13 +94,15 @@
   #subms <- fs::dir_ls("~/Downloads", regexp = "CIRG_.*.xlsx$")
   subms <- fs::dir_ls(dir_raw, regexp = "CIRG_.*.xlsx$")
 
-  subms
-
   # Worksheets Visibility
 
-  subms %>%
+  shts <- subms %>%
     dplyr::first() %>%
     cir_vsheets()
+
+  vshts <- subms %>%
+    dplyr::first() %>%
+    cir_vsheets(return_names = T)
 
   #subms %>% map_dfr(cir_vsheets)
 
@@ -104,6 +110,7 @@
 
   # Initial Validation
 
+<<<<<<< HEAD
   subms %>%
     dplyr::first() %>%
     cir_extract_meta()
@@ -118,40 +125,52 @@
 
   meta <- subms %>%
     dplyr::first() %>%
+=======
+  metas <- subms %>%
+    map_dfr(validate_initial)
+
+  #  Get random file by template
+  subm_file <- metas %>%
+    #filter(!if_any(!filename, ~is.na(.)), type == "Wide") %>%     # test wide templates
+    #filter(!if_any(!filename, ~is.na(.)), type == "Semi-wide") %>% # Test semi-wide templates
+    filter(!if_any(!filename, ~is.na(.)), type == "Long") %>%      # Test semi-wide templates
+    filter(str_detect(filename, "FY23")) %>%
+    pull(filename) %>%
+    sample(1) %>%
+    #first() %>%
+    #nth(2) %>%
+    file.path(dir_raw, .)
+
+  # open_path(subm_file)
+
+  meta <- subm_file %>%
+>>>>>>> feature/cirg-app
     validate_initial()
 
-  #metas <- subms %>% map_dfr(validate_initial)
-
-  # Import & 2nd round of Validation
-  df_subm <- subms %>%
-    dplyr::first() %>%
+  # Import & 2nd round of validations
+  df_subm <- subm_file %>%
     cir_import(template = meta$type)
 
   df_subm$checks %>% glimpse
   df_subm$data %>% glimpse
 
+  df_subm$data %>%
+    select(-(1:filename)) %>%
+    cir_template_ta()
+
+  df_subm$data %>%
+    select(-(1:filename)) %>%
+    cir_template_cols(template = meta$type)
+
   df_subm$checks %>%
     mutate(across(where(is.logical), as.character)) %>%
+    mutate(across(where(is.integer), as.character)) %>%
     cir_reshape_checks(vname = "value")
-
-  # Import all
-  # df_imp_checks <- NULL
-  #
-  # df_imp_data <- metas %>%
-  #   filter(subm_valid == TRUE) %>%
-  #   select(filename, type) %>%
-  #   pmap_dfr(function(filename, type) {
-  #     subm <- cir_import(filepath = file.path(dir_raw, filename), template = type)
-  #
-  #     df_imp_checks <<- bind_rows(subm$checks)
-  #
-  #     return(subm$data)
-  #   })
 
   # Transformation
 
-  df_trans <- df_subm$data %>%
-    cir_reshape()
+  #df_trans <- df_subm$data %>% cir_reshape(clean = F)
+  df_trans <- df_subm$data %>% cir_reshape(clean = T)
 
   df_trans %>% glimpse()
 

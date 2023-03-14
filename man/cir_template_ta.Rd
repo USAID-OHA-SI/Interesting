@@ -10,7 +10,7 @@ cir_template_ta(df_cir)
 \item{df_cir}{Data frame to extract columns from}
 }
 \value{
-Technical Area name(s)
+Technical Area name(s) as vector. Un-identified TAs are removed from the result
 }
 \description{
 Extract Technical Areas
