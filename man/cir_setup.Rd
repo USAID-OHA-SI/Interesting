@@ -4,12 +4,12 @@
 \alias{cir_setup}
 \title{Setup processing folders}
 \usage{
-cir_setup(folder = "cirg-submissions", dt = NULL)
+cir_setup(folderpath, dt = NULL)
 }
 \arguments{
-\item{folder}{Folder path used for CIRG Data processing}
-
 \item{dt}{Processing date. If null, current date is used}
+
+\item{folder}{Folder path used for CIRG Data processing}
 }
 \description{
 Setup processing folders

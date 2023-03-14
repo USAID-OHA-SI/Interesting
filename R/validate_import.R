@@ -21,8 +21,8 @@ validate_import <- function(df_cir, template){
   req_cols <- cir_template_cols(df_cir, template = template)
 
   # Missing & Extra Columns
-  missing <- "[template could not be confirmed]"
-  extra <- "[template could not be confirmed]"
+  #missing <- "[template could not be confirmed]"
+  #extra <- "[template could not be confirmed]"
 
   # Check multi ous sheets
   ous <- "[Unknown]"
@@ -32,8 +32,7 @@ validate_import <- function(df_cir, template){
     ta_inds <- df_cir %>%
       dplyr::distinct({template_cols_ind}) %>%
       dplyr::pull() %>%
-      sort() %>%
-      paste(collapse = ", ")
+      sort()
   }
 
   # Check data structure based on template
@@ -47,19 +46,18 @@ validate_import <- function(df_cir, template){
                   template_cols_disaggs)) %>%
         stringr::str_extract("[^.]+") %>%
         base::unique() %>%
-        base::sort() %>%
-        paste0(collapse = ", ")
+        base::sort()
     }
 
     # Get missing and extra cols
-    #missing <- setdiff(req_cols, cols)
-    extra <- setdiff(cols, req_cols)
-
+    # missing <- setdiff(req_cols, cols)
+    # extra <- setdiff(cols, req_cols)
+    #
     # Restrict Extract Columns
-    if (length(extra) > 0) {
-      df_cir <- df_cir %>%
-        dplyr::select(!tidyselect::all_of(extra))
-    }
+    # if (length(extra) > 0) {
+    #   df_cir <- df_cir %>%
+    #     dplyr::select(!tidyselect::all_of(extra))
+    # }
 
     # Get OUs
     ous <- df_cir %>%
@@ -72,22 +70,17 @@ validate_import <- function(df_cir, template){
     template_confirmed = !is.null(req_cols),
     template_tech_areas = paste0(ta, collapse = ", "),
     indicators = paste0(ta_inds, collapse = ", "),
-    #cols_missing = paste0(missing, collapse = ", "),
-    cols_extra = paste0(extra, collapse = ", "),
-    cols_extra_restricted = length(extra) > 0 & all(extra %in% cols),
     has_data = nrow(df_cir) > 0,
-    has_multi_ous = ifelse(str_detect(ous, "^\\[.*\\]$"), -999, length(ous) > 1),
-    ous = paste0(ous, collapse = ", ")
+    ous = paste0(ous, collapse = ", "),
+    ous_count = ifelse(str_detect(ous, "^\\[.*\\]$"), -999, length(ous)),
   )
 
   # Notification
   if (interactive()) {
     cat("\nSheet Technical areas:", paint_yellow(vimp$template_tech_areas),
         "\nSheet Indicators?", paint_yellow(paste0(ta_inds, collapse = ", ")),
-        "\nAre there missing columns?", paint_yellow(ifelse(vimp$cols_missing == "", "[None]", vimp$cols_missing)),
-        #"\nAre there extra columns?", paint_yellow(ifelse(vimp$cols_extra == "", "[None]", vimp$cols_extra)),
         "\nSheet contains data?", paint_iftrue(vimp$has_data),
-        "\nSheet has multiple OUs?", paint_iftrue(vimp$has_multi_ous),
+        "\nOUs Count:", vimp$ous_count,
         "\nOUs: ", paint_iftrue(vimp$ous),
         "\n")
   }

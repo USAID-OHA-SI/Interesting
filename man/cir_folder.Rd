@@ -4,12 +4,12 @@
 \alias{cir_folder}
 \title{Get processing folder path}
 \usage{
-cir_folder(type = "raw", dt = NULL)
+cir_folder(folderpath, type = "raw")
 }
 \arguments{
-\item{type}{Folder type}
+\item{folderpath}{Parent folder path}
 
-\item{dt}{processing date}
+\item{type}{Folder type}
 }
 \description{
 Get processing folder path

@@ -14,6 +14,9 @@ cir_import <- function(filepath,
                        sheets = NULL,
                        template = NULL){
 
+  # skip header metadata
+  skip_rows <- 2
+
   # Notification
   if (interactive()) {
     cat("\n---- IMPORTING CIR SUBMISSION ----\n\n")
@@ -39,7 +42,9 @@ cir_import <- function(filepath,
     # Return explicit error
     return(
       list(
-        "checks" = tibble::tibble(filename = basename(filepath), file_imported = FALSE),
+        "checks" = tibble::tibble(filename = basename(filepath),
+                                  file_imported = FALSE,
+                                  notes = "No valid CIR Data Sheets detected."),
         "data" = NULL
       )
     )
@@ -62,7 +67,7 @@ cir_import <- function(filepath,
       # Read data from excel sheet
       df_tab <- readxl::read_excel(filepath,
                                    sheet = .x,
-                                   skip = 2,
+                                   skip = skip_rows,
                                    col_types = "text")
 
       # Notification
@@ -75,7 +80,8 @@ cir_import <- function(filepath,
         df_tab <- df_tab %>%
           dplyr::mutate(filename = basename(filepath),
                         sheet = .x,
-                        row_id = dplyr::row_number() + 2)
+                        row_id = (dplyr::row_number() + skip_rows + 1)) %>%
+          dplyr::relocate(filename, sheet, row_id, .before = 1)
 
         return(df_tab)
       }
@@ -84,7 +90,7 @@ cir_import <- function(filepath,
       pvimp <- tibble::tibble(
         filename = basename(filepath),
         file_imported = TRUE,
-        sheet = .x,
+        sheet_name = .x,
         sheet_imported = FALSE
       )
 
@@ -154,7 +160,7 @@ cir_import <- function(filepath,
       df_data <- vimp$data %>%
         dplyr::mutate(filename = basename(filepath),
                       sheet = .x,
-                      row_id = dplyr::row_number() + 2)
+                      row_id = (dplyr::row_number() + skip_rows + 1))
 
       return(df_data)
     })
@@ -173,9 +179,14 @@ cir_import <- function(filepath,
     cir_template_cols(template = template)
 
   miss_cols <- setdiff(req_cols, subm_cols)
+  extra_cols <- setdiff(subm_cols, req_cols)
 
-  checks <<- checks %>%
-    tibble::add_column(cols_missing = paste(miss_cols, collapse = ", "))
+  # Add missing / extra cols to errors tracker
+  checks <- checks %>%
+    dplyr::mutate(
+      cols_missing = paste(miss_cols, collapse = ", "),
+      cols_extra = paste(extra_cols, collapse = ", ")
+    )
 
   # Return data + checks
   return(list(

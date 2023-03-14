@@ -216,7 +216,7 @@ check_tabs <- function(filepath){
     has_cirg_sheets = has_cirg,
     sheets_count = tabs_count,
     sheets_valid = ifelse(nchar(tabs_imported) > 0, tabs_imported, "None"),
-    sheets_exclude = ifelse(nchar(tabs_excluded) > 0, tabs_excluded, "None"),
+    sheets_excluded = ifelse(nchar(tabs_excluded) > 0, tabs_excluded, "None"),
     sheets_hidden = ifelse(nchar(tabs_hidden) > 0, tabs_hidden, "None"),
   )
 

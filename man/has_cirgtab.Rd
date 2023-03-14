@@ -7,7 +7,7 @@
 has_cirgtab(filepath)
 }
 \arguments{
-\item{filepath}{filepath to sumbitted template}
+\item{filepath}{submission file path}
 }
 \description{
 Determine if there are tabs to import

@@ -340,7 +340,7 @@ cir_template_cols <- function(df_cir,
           paste0(".....")
 
         # No pop needed in non-kp semi-wide templates
-        if (.x != "kp") {
+        if (!.x %in% c("kp", "lab", "other", "prep")) {
           c(template_cols_core,
             template_cols_disaggs[template_cols_disaggs != "population"],
             ta_cols)
@@ -465,9 +465,9 @@ cir_restrict_cols <- function(df) {
 #' @return Validation Checks in long format
 #' @export
 
-cir_reshape_checks <- function(.df_checks, vname = "location") {
+cir_reshape_checks <- function(.df_checks, vname = "status") {
   .df_checks <- .df_checks %>%
-    tidyr::pivot_longer(cols = !c(filename, sheet),
+    tidyr::pivot_longer(cols = !c(filename, file_imported, sheet_name),
                         names_to = "validations",
                         values_to = {{vname}}) %>%
     dplyr::filter(!is.na(!!rlang::sym(vname)) & !!rlang::sym(vname) != "")
@@ -477,8 +477,10 @@ cir_reshape_checks <- function(.df_checks, vname = "location") {
       tidyr::separate_rows({{vname}}, sep = ", ")
   }
 
-  .df_checks %>%
-    dplyr::filter(!is.na(!!rlang::sym(vname)) & !!rlang::sym(vname) != "")
+  # .df_checks <- .df_checks %>%
+  #   dplyr::filter(!is.na(!!rlang::sym(vname)) & !!rlang::sym(vname) != "")
+
+  return(.df_checks)
 }
 
 

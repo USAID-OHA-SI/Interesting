@@ -115,8 +115,8 @@
 
   #  Get random file by template
   subm_file <- metas %>%
-    filter(!if_any(!filename, ~is.na(.)), type == "Wide") %>%     # test wide templates
-    #filter(!if_any(!filename, ~is.na(.)), type == "Semi-wide") %>% # Test semi-wide templates
+    #filter(!if_any(!filename, ~is.na(.)), type == "Wide") %>%     # test wide templates
+    filter(!if_any(!filename, ~is.na(.)), type == "Semi-wide") %>% # Test semi-wide templates
     #filter(!if_any(!filename, ~is.na(.)), type == "Long") %>%      # Test semi-wide templates
     filter(str_detect(filename, "FY23")) %>%
     pull(filename) %>%
@@ -125,7 +125,7 @@
     #nth(2) %>%
     file.path(dir_raw, .)
 
-  open_path(subm_file)
+  # open_path(subm_file)
 
   meta <- subm_file %>%
     validate_initial()
@@ -137,48 +137,19 @@
   df_subm$checks %>% glimpse
   df_subm$data %>% glimpse
 
-  df_subm$data %>%
-    dplyr::select(dplyr::ends_with(".."))
 
   df_subm$data %>%
-    #select(1:filename) %>%
-    #select(-filename) %>%
-    names() %>%
-    setdiff(
-      c(template_cols_core, template_cols_ind, template_cols_disaggs)
-    ) %>%
-    stringr::str_extract("[^.]+") %>%
-    base::unique() %>%
-    stringr::str_to_lower() %>%
-    tibble::tibble(indicator = .)
-
-  df_subm$data %>%
-    select(1:filename) %>%
-    select(-filename) %>%
+    select(-(1:filename)) %>%
     cir_template_ta()
 
   df_subm$data %>%
-    select(1:filename) %>%
-    select(-filename) %>%
+    select(-(1:filename)) %>%
     cir_template_cols(template = meta$type)
 
   df_subm$checks %>%
     mutate(across(where(is.logical), as.character)) %>%
+    mutate(across(where(is.integer), as.character)) %>%
     cir_reshape_checks(vname = "value")
-
-  # Import all
-  # df_imp_checks <- NULL
-  #
-  # df_imp_data <- metas %>%
-  #   filter(subm_valid == TRUE) %>%
-  #   select(filename, type) %>%
-  #   pmap_dfr(function(filename, type) {
-  #     subm <- cir_import(filepath = file.path(dir_raw, filename), template = type)
-  #
-  #     df_imp_checks <<- bind_rows(subm$checks)
-  #
-  #     return(subm$data)
-  #   })
 
   # Transformation
 
