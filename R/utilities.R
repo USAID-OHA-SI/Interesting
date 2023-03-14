@@ -468,7 +468,7 @@ cir_restrict_cols <- function(df) {
 cir_reshape_checks <- function(.df_checks, vname = "status") {
   .df_checks <- .df_checks %>%
     tidyr::pivot_longer(cols = !c(filename, file_imported, sheet_name),
-                        names_to = "validations",
+                        names_to = "validation",
                         values_to = {{vname}}) %>%
     dplyr::filter(!is.na(!!rlang::sym(vname)) & !!rlang::sym(vname) != "")
 

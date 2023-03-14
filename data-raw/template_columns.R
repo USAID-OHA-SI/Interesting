@@ -165,8 +165,12 @@
 
   template_cols_value <- "value"
   template_cols_ind <- "indicator"
-  template_cols_disaggs <- c("sex", "age", "population",
-                             "otherdisaggregate", "numdenom")
+  template_cols_kp <- "population"
+  template_cols_disaggs <- c("sex", "age",
+                             "population",
+                             "otherdisaggregate",
+                             "numdenom")
+
 
   template_cols_meta <- template_cols_long %>% setdiff(template_cols_value)
 
@@ -175,6 +179,7 @@
 
   usethis::use_data(template_cols_value, overwrite = TRUE)
   usethis::use_data(template_cols_ind, overwrite = TRUE)
+  usethis::use_data(template_cols_kp, overwrite = TRUE)
   usethis::use_data(template_cols_disaggs, overwrite = TRUE)
   usethis::use_data(template_cols_meta, overwrite = TRUE)
   usethis::use_data(template_cols_core, overwrite = TRUE)

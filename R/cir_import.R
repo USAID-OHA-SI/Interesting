@@ -79,7 +79,7 @@ cir_import <- function(filepath,
 
         df_tab <- df_tab %>%
           dplyr::mutate(filename = basename(filepath),
-                        sheet = .x,
+                        sheet_name = .x,
                         row_id = (dplyr::row_number() + skip_rows + 1)) %>%
           dplyr::relocate(filename, sheet, row_id, .before = 1)
 
@@ -159,7 +159,7 @@ cir_import <- function(filepath,
       # Making sure records can be traced back to submissions
       df_data <- vimp$data %>%
         dplyr::mutate(filename = basename(filepath),
-                      sheet = .x,
+                      sheet_name = .x,
                       row_id = (dplyr::row_number() + skip_rows + 1))
 
       return(df_data)
@@ -167,15 +167,15 @@ cir_import <- function(filepath,
 
   # Move tracking variable up front
   df_imp <- df_imp %>%
-    dplyr::relocate(filename, sheet, row_id, .before = 1)
+    dplyr::relocate(filename, sheet_name, row_id, .before = 1)
 
   # Check missing columns based on template
   subm_cols <- df_imp %>%
-    dplyr::select(-c(filename, sheet, row_id)) %>%
+    dplyr::select(-c(filename, sheet_name, row_id)) %>%
     base::names()
 
   req_cols <- df_imp %>%
-    dplyr::select(-c(filename, sheet, row_id)) %>%
+    dplyr::select(-c(filename, sheet_name, row_id)) %>%
     cir_template_cols(template = template)
 
   miss_cols <- setdiff(req_cols, subm_cols)

@@ -116,8 +116,8 @@
   #  Get random file by template
   subm_file <- metas %>%
     #filter(!if_any(!filename, ~is.na(.)), type == "Wide") %>%     # test wide templates
-    filter(!if_any(!filename, ~is.na(.)), type == "Semi-wide") %>% # Test semi-wide templates
-    #filter(!if_any(!filename, ~is.na(.)), type == "Long") %>%      # Test semi-wide templates
+    #filter(!if_any(!filename, ~is.na(.)), type == "Semi-wide") %>% # Test semi-wide templates
+    filter(!if_any(!filename, ~is.na(.)), type == "Long") %>%      # Test semi-wide templates
     filter(str_detect(filename, "FY23")) %>%
     pull(filename) %>%
     sample(1) %>%
@@ -137,7 +137,6 @@
   df_subm$checks %>% glimpse
   df_subm$data %>% glimpse
 
-
   df_subm$data %>%
     select(-(1:filename)) %>%
     cir_template_ta()
@@ -153,8 +152,8 @@
 
   # Transformation
 
-  df_trans <- df_subm$data %>%
-    cir_reshape()
+  #df_trans <- df_subm$data %>% cir_reshape(clean = F)
+  df_trans <- df_subm$data %>% cir_reshape(clean = T)
 
   df_trans %>% glimpse()
 

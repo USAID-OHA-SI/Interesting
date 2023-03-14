@@ -20,17 +20,14 @@ validate_import <- function(df_cir, template){
   ta_inds <- NULL
   req_cols <- cir_template_cols(df_cir, template = template)
 
-  # Missing & Extra Columns
-  #missing <- "[template could not be confirmed]"
-  #extra <- "[template could not be confirmed]"
-
   # Check multi ous sheets
   ous <- "[Unknown]"
 
   # List Indicators
   if (template_cols_ind %in% cols) {
     ta_inds <- df_cir %>%
-      dplyr::distinct({template_cols_ind}) %>%
+      dplyr::select(tidyselect::all_of(template_cols_ind)) %>%
+      dplyr::distinct() %>%
       dplyr::pull() %>%
       sort()
   }
@@ -48,16 +45,6 @@ validate_import <- function(df_cir, template){
         base::unique() %>%
         base::sort()
     }
-
-    # Get missing and extra cols
-    # missing <- setdiff(req_cols, cols)
-    # extra <- setdiff(cols, req_cols)
-    #
-    # Restrict Extract Columns
-    # if (length(extra) > 0) {
-    #   df_cir <- df_cir %>%
-    #     dplyr::select(!tidyselect::all_of(extra))
-    # }
 
     # Get OUs
     ous <- df_cir %>%
